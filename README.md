@@ -50,11 +50,20 @@ Forest dark-green theme throughout.
 
 ## Deploy to Vercel (recommended)
 
-You'll need two free accounts: **Neon** (database) and **Vercel** (hosting).
+You'll need a free **Supabase** database (sign in with GitHub) and your
+**Vercel** project.
 
-1. **Create a free database.** At [neon.tech](https://neon.tech), sign up and
-   create a project. Copy the **connection string** (starts with
-   `postgresql://…` and ends with `?sslmode=require`).
+1. **Create a free database.** At [supabase.com](https://supabase.com), sign in
+   with GitHub and create a project. Set a **database password** and keep it
+   handy. Then go to *Project Settings → Database → Connection string* and pick
+   **Session pooler**. Copy that string and replace `[YOUR-PASSWORD]` with the
+   password you set. It looks like:
+   ```
+   postgresql://postgres.abcd1234:YOURPASSWORD@aws-0-eu-west-2.pooler.supabase.com:5432/postgres
+   ```
+   > ⚠️ Use the **Session pooler** string — *not* the "Direct connection".
+   > Vercel can't reach Supabase's direct connection (it's IPv6-only), which
+   > causes "Can't reach database server" errors.
 
 2. **Import the repo into Vercel.** At [vercel.com](https://vercel.com) → *Add
    New → Project* → import this repository. It's detected as Next.js
@@ -64,7 +73,7 @@ You'll need two free accounts: **Neon** (database) and **Vercel** (hosting).
    Environment Variables*):
    | Name            | Value                                                        |
    | --------------- | ------------------------------------------------------------ |
-   | `DATABASE_URL`  | your Neon connection string                                  |
+   | `DATABASE_URL`  | your Supabase **Session pooler** string (with the password)  |
    | `AUTH_SECRET`   | a long random string (see command below)                     |
    | `ADMIN_PASSWORD`| *(optional)* a strong admin password — otherwise `admin123`  |
 
@@ -91,7 +100,7 @@ You'll need two free accounts: **Neon** (database) and **Vercel** (hosting).
 
 ## Run locally (optional)
 
-Needs a PostgreSQL database — you can reuse the same Neon one.
+Needs a PostgreSQL database — you can reuse the same Supabase one.
 
 ```bash
 npm install
