@@ -1,0 +1,118 @@
+// Rose Restaurant — data model
+// SQLite for zero-config self-hosting. Switch `provider` to "postgresql"
+// and update DATABASE_URL to move to a managed database later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Staff member / login account. Admins are Employees with role = ADMIN.
+/// role is "ADMIN" or "STAFF" (SQLite has no enum support).
+model Employee {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  role         String         @default("STAFF")
+  position     String? // e.g. Chef, Waiter, Kitchen Porter
+  hourlyRate   Float          @default(0)
+  phone        String?
+  active       Boolean        @default(true)
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  shifts       Shift[]
+  availability Availability[]
+}
+
+/// A scheduled shift. employeeId null = open/unassigned slot.
+model Shift {
+  id         String    @id @default(cuid())
+  date       DateTime // the calendar day of the shift (stored at 00:00 UTC)
+  start      String // "HH:mm"
+  end        String // "HH:mm"
+  role       String? // what they're working as that shift
+  notes      String?
+  published  Boolean   @default(true)
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+
+  @@index([date])
+  @@index([employeeId])
+}
+
+/// A staff member's weekly availability / preferences (one row per weekday).
+model Availability {
+  id             String   @id @default(cuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  dayOfWeek      Int // 0 = Monday ... 6 = Sunday
+  available      Boolean  @default(true)
+  preferredStart String? // "HH:mm"
+  preferredEnd   String? // "HH:mm"
+  note           String?
+
+  @@unique([employeeId, dayOfWeek])
+}
+
+/// One row per trading day. Income split by channel.
+model DailyIncome {
+  id        String   @id @default(cuid())
+  date      DateTime @unique // the trading day (stored at 00:00 UTC)
+  zReport   Float    @default(0) // till / in-house takings from the Z report
+  justEat   Float    @default(0)
+  uberEats  Float    @default(0)
+  deliveroo Float    @default(0)
+  covers    Int? // optional: number of customers served
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A supplier you order from. Open as a profile to get contact details.
+model Supplier {
+  id          String    @id @default(cuid())
+  name        String
+  category    String? // e.g. Meat, Vegetables, Drinks
+  contactName String?
+  phone       String?
+  email       String?
+  website     String?
+  address     String?
+  notes       String? // order days, account number, min order, etc.
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+}
+
+/// A product/ingredient. Linked to a supplier. `needed` = on the order list.
+model Product {
+  id         String    @id @default(cuid())
+  name       String
+  unit       String? // kg, box, case, each...
+  category   String?
+  needed     Boolean   @default(false) // marked to be ordered
+  neededNote String? // e.g. "2 cases" — how much to order
+  parLevel   String? // optional target stock level
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([supplierId])
+  @@index([needed])
+}
+
+/// Simple key/value app settings (restaurant name, etc.).
+model Setting {
+  key   String @id
+  value String
+}
