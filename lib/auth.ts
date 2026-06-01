@@ -32,6 +32,29 @@ export async function verifyPassword(
   return bcrypt.compare(plain, hash);
 }
 
+/**
+ * On a brand-new (empty) database, create a default admin so the owner can log
+ * in. Username "admin", password from ADMIN_PASSWORD env or "admin123".
+ * Safe to call repeatedly — it no-ops once any employee exists.
+ */
+export async function ensureBootstrapAdmin(): Promise<void> {
+  try {
+    if ((await prisma.employee.count()) > 0) return;
+    await prisma.employee.create({
+      data: {
+        name: "Admin",
+        username: "admin",
+        passwordHash: await hashPassword(process.env.ADMIN_PASSWORD || "admin123"),
+        role: "ADMIN",
+        position: "Manager",
+      },
+    });
+  } catch (e) {
+    // Ignore the race where two requests bootstrap at once; surface anything else.
+    if ((e as { code?: string })?.code !== "P2002") throw e;
+  }
+}
+
 /** Full Employee record for the logged-in user, or null. */
 export async function getCurrentUser() {
   const session = await getSession();

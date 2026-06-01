@@ -14,8 +14,8 @@ Forest dark-green theme throughout.
   %, and an "items to order" reminder.
 - **Rota** — weekly shift scheduler. Add/assign/edit/delete shifts per day,
   see hours and estimated labour cost. Open (unassigned) shifts supported.
-- **Team** — add employees with an **hourly rate**, position and phone; give
-  each a login (Staff or Admin). Reset passwords, deactivate or remove people.
+- **Team** — add employees with an **hourly rate**, position, photo and login
+  (Staff or Admin). Reset passwords, deactivate or remove people.
 - **Income** — enter a day's takings split into **Z report (till)**,
   **Just Eat**, **Uber Eats** and **Deliveroo**. Monthly totals, averages,
   best day, delivery share, per-day breakdown and a daily bar chart.
@@ -30,7 +30,12 @@ Forest dark-green theme throughout.
 - **My shifts** — next shift, this week's hours & estimated pay, and all
   upcoming shifts. Bottom-tab navigation, designed to be dead simple on a phone.
 - **Availability** — tick the days you can work and set preferred hours / notes.
-- **Profile** — see your rate & details, update your phone, change your password.
+- **Profile** — set your photo, update your phone, change your password.
+
+### Login
+- **Username + password.** Admin signs in with username `Admin`.
+- **Staff tap their photo** on the sign-in screen, then type their password.
+  They set their own photo from **Profile**.
 
 ---
 
@@ -38,83 +43,77 @@ Forest dark-green theme throughout.
 
 - **Next.js 14** (App Router) + **TypeScript**
 - **Tailwind CSS** (custom forest dark-green theme, mobile-first)
-- **Prisma** ORM + **SQLite** (zero-config, file-based database)
+- **Prisma** ORM + **PostgreSQL**
 - Cookie session auth (signed JWT via `jose`, passwords hashed with `bcryptjs`)
-- **Username + password** login. Staff can set a profile photo and simply tap
-  it on the sign-in screen; managers sign in by username.
-- No external services required for local use — runs entirely on your machine.
 
 ---
 
-## Getting started
+## Deploy to Vercel (recommended)
+
+You'll need two free accounts: **Neon** (database) and **Vercel** (hosting).
+
+1. **Create a free database.** At [neon.tech](https://neon.tech), sign up and
+   create a project. Copy the **connection string** (starts with
+   `postgresql://…` and ends with `?sslmode=require`).
+
+2. **Import the repo into Vercel.** At [vercel.com](https://vercel.com) → *Add
+   New → Project* → import this repository. It's detected as Next.js
+   automatically (via the included `vercel.json`).
+
+3. **Add Environment Variables** (on the import screen, or *Project → Settings →
+   Environment Variables*):
+   | Name            | Value                                                        |
+   | --------------- | ------------------------------------------------------------ |
+   | `DATABASE_URL`  | your Neon connection string                                  |
+   | `AUTH_SECRET`   | a long random string (see command below)                     |
+   | `ADMIN_PASSWORD`| *(optional)* a strong admin password — otherwise `admin123`  |
+
+   Generate a secret:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+4. **Deploy.** The build automatically creates the database tables.
+
+5. **Open your site and sign in** as username **`Admin`** / password
+   **`admin123`** (or your `ADMIN_PASSWORD`). Go to **Settings**, change the
+   password, then add your team under **Team**. Share the Vercel link with your
+   staff — they tap their photo to log in.
+
+> Pushing to the connected branch makes Vercel redeploy automatically.
+
+---
+
+## Run locally (optional)
+
+Needs a PostgreSQL database — you can reuse the same Neon one.
 
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Create the database and load demo data (admin login + sample week)
-npm run setup
-
-# 3. Start the app
-npm run dev
+# put your DATABASE_URL and AUTH_SECRET in .env (copy from .env.example)
+npm run setup   # create tables + load demo data
+npm run dev     # http://localhost:3000
 ```
 
-Then open **http://localhost:3000**.
-
-### Demo logins
+Demo logins after `npm run setup`:
 
 | Role  | Username | Password    |
 | ----- | -------- | ----------- |
 | Admin | `Admin`  | `admin123`  |
 | Staff | `maria`  | `staff1234` |
 
-Usernames are case-insensitive. Staff can also just tap their photo on the
-login screen and enter their password.
-
-> Change these straight away from **Settings** (admin) / **Profile** (staff),
-> and delete any demo accounts you don't need from **Team**.
-
 ---
 
-## Useful commands
+## Commands
 
 | Command             | What it does                                          |
 | ------------------- | ----------------------------------------------------- |
 | `npm run dev`       | Start the dev server                                  |
 | `npm run build`     | Production build                                      |
-| `npm run start`     | Run the production build                              |
-| `npm run setup`     | Create DB schema + seed demo data                     |
-| `npm run seed`      | (Re)load demo data — safe to re-run, won't duplicate  |
+| `npm run setup`     | Create DB tables + seed demo data                     |
+| `npm run seed`      | (Re)load demo data — safe to re-run                   |
 | `npm run db:push`   | Sync the Prisma schema to the database                |
-| `npm run db:studio` | Open Prisma Studio to browse/edit data                |
-
----
-
-## Going to production
-
-1. **Change `AUTH_SECRET`** in `.env` (or your host's env vars) to a long random
-   value:
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-   ```
-
-### Where to host
-
-The app needs a database that can be **written to** at runtime.
-
-- **A server / VPS / Railway / Render** (a long-running Node process with a disk):
-  SQLite works as-is. Deploy, set `DATABASE_URL` + `AUTH_SECRET`, run
-  `npm run setup`, then `npm run start`.
-- **Vercel / Netlify / other serverless** (the filesystem is read-only and
-  resets on every request): SQLite **won't persist** — you must use a hosted
-  database. Create a free **Postgres** (e.g. Neon or Vercel Postgres), then:
-  1. In `prisma/schema.prisma` change `provider = "sqlite"` to
-     `provider = "postgresql"`.
-  2. Set `DATABASE_URL` to the Postgres connection string (in Vercel's
-     Environment Variables) and `AUTH_SECRET` too.
-  3. Run `npx prisma db push` then `npm run seed` against that database once.
-
-The included `vercel.json` already tells Vercel to build this as a Next.js app.
+| `npm run db:studio` | Browse/edit data in Prisma Studio                     |
 
 ---
 
@@ -122,16 +121,16 @@ The included `vercel.json` already tells Vercel to build this as a Next.js app.
 
 ```
 app/
-  login/            Sign-in page + auth actions
+  login/            Sign-in (photo tiles + username) + auth actions
   admin/            Admin portal (dashboard, rota, employees, income,
                     suppliers, orders, settings) — each with its own actions.ts
   staff/            Staff portal (shifts, availability, profile)
-components/         Reusable UI: PortalShell, charts, cards, icons…
+components/         Reusable UI: PortalShell, charts, Avatar, icons…
 lib/                prisma, session/auth, money, dates, calc, analytics
 prisma/
-  schema.prisma     Data model
+  schema.prisma     Data model (PostgreSQL)
   seed.ts           Demo data
 ```
 
-All data mutations use server actions; pages are server-rendered and read
-directly from the database, so the app works with JavaScript-light forms.
+A default admin is created automatically the first time the app runs against an
+empty database, so a fresh deploy is ready to sign in to immediately.

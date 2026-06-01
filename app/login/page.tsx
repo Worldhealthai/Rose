@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { landingPathFor } from "@/lib/auth";
+import { landingPathFor, ensureBootstrapAdmin } from "@/lib/auth";
 import { LoginPicker } from "@/components/LoginPicker";
 import { Icon } from "@/components/icons";
 
@@ -10,6 +10,9 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage() {
   const session = await getSession();
   if (session) redirect(landingPathFor(session.role));
+
+  // First run on a fresh database: make sure an admin account exists.
+  await ensureBootstrapAdmin();
 
   const staff = await prisma.employee.findMany({
     where: { active: true, role: "STAFF" },
