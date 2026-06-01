@@ -73,6 +73,11 @@ You'll need two free accounts: **Neon** (database) and **Vercel** (hosting).
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
 
+   > When adding each variable, tick **all** environments (Production, Preview
+   > and Development). A deploy from a non-production branch runs as a *Preview*,
+   > so a Production-only variable won't be visible and the build will fail with
+   > `Can't reach database server at HOST:5432`.
+
 4. **Deploy.** The build automatically creates the database tables.
 
 5. **Open your site and sign in** as username **`Admin`** / password

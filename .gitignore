@@ -26,7 +26,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files (keep .env for self-hosted dev defaults; never commit real secrets)
+# env files — set real values in Vercel / your host, never commit them
+.env
 .env*.local
 
 # typescript
