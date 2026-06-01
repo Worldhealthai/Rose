@@ -8,6 +8,23 @@ export async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, 10);
 }
 
+/** Usernames are case-insensitive and have no spaces. */
+export function normalizeUsername(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, "");
+}
+
+/**
+ * Validate a profile-picture data URL. Returns the value if it's a small image
+ * data URL, an empty string to clear it, or undefined to leave unchanged.
+ */
+export function cleanAvatar(value: FormDataEntryValue | null): string | null {
+  const v = String(value ?? "").trim();
+  if (!v) return null;
+  if (!v.startsWith("data:image/")) return null;
+  if (v.length > 900_000) return null; // ~700KB image; resized client-side
+  return v;
+}
+
 export async function verifyPassword(
   plain: string,
   hash: string,

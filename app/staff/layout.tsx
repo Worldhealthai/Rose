@@ -15,7 +15,7 @@ export default async function StaffLayout({
   const user = await requireStaff();
   return (
     <PortalShell
-      user={{ name: user.name, role: user.role }}
+      user={{ name: user.name, role: user.role, avatar: user.avatar }}
       subtitle="Staff portal"
       items={NAV}
       mobileNav="tabs"

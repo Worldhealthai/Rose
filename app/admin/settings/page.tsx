@@ -39,8 +39,8 @@ export default async function SettingsPage({
       <Card>
         <SectionTitle>Your account</SectionTitle>
         <div className="mb-4 text-sm text-ink-muted">
-          Signed in as <span className="font-medium text-ink">{me?.name}</span> ·{" "}
-          {me?.email}
+          Signed in as <span className="font-medium text-ink">{me?.name}</span> ·
+          username <span className="font-medium text-ink">@{me?.username}</span>
         </div>
         <form action={changeMyPassword} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2 sm:max-w-md">

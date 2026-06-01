@@ -3,6 +3,8 @@ import { money, CURRENCY_SYMBOL } from "@/lib/money";
 import { PageHeader, Card, Badge } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
+import { Avatar } from "@/components/Avatar";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import {
   createEmployee,
   updateEmployee,
@@ -14,24 +16,12 @@ export const dynamic = "force-dynamic";
 
 type Employee = Awaited<ReturnType<typeof prisma.employee.findMany>>[number];
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
-
 function EmployeeCard({ e }: { e: Employee }) {
   return (
     <Card as="li" className="!p-0 overflow-hidden">
       <details className="group">
         <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-forest-600/25 text-sm font-semibold text-forest-100">
-            {initials(e.name) || "?"}
-          </span>
+          <Avatar name={e.name} src={e.avatar} size={44} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="truncate font-semibold text-ink">{e.name}</p>
@@ -47,7 +37,8 @@ function EmployeeCard({ e }: { e: Employee }) {
               )}
             </div>
             <p className="truncate text-xs text-ink-muted">
-              {e.position ?? "Team member"} · {money(e.hourlyRate)}/hr
+              @{e.username} · {e.position ?? "Team member"} ·{" "}
+              {money(e.hourlyRate)}/hr
             </p>
           </div>
           <Icon
@@ -60,19 +51,29 @@ function EmployeeCard({ e }: { e: Employee }) {
           {/* Edit details */}
           <form action={updateEmployee} className="space-y-3">
             <input type="hidden" name="id" value={e.id} />
+            <AvatarUpload displayName={e.name} current={e.avatar} />
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="label">Name</label>
                 <input name="name" defaultValue={e.name} className="input" required />
               </div>
               <div>
-                <label className="label">Email (login)</label>
+                <label className="label">Username (login)</label>
+                <input
+                  name="username"
+                  defaultValue={e.username}
+                  className="input"
+                  autoCapitalize="none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">Email (optional)</label>
                 <input
                   name="email"
                   type="email"
-                  defaultValue={e.email}
+                  defaultValue={e.email ?? ""}
                   className="input"
-                  required
                 />
               </div>
               <div>
@@ -182,18 +183,28 @@ export default async function EmployeesPage({
           action={createEmployee}
           className="space-y-3 border-t border-border-soft p-4"
         >
+          <AvatarUpload displayName="New team member" />
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="label">Name</label>
               <input name="name" className="input" required placeholder="Full name" />
             </div>
             <div>
-              <label className="label">Email (login)</label>
+              <label className="label">Username (login)</label>
+              <input
+                name="username"
+                className="input"
+                required
+                autoCapitalize="none"
+                placeholder="e.g. maria"
+              />
+            </div>
+            <div>
+              <label className="label">Email (optional)</label>
               <input
                 name="email"
                 type="email"
                 className="input"
-                required
                 placeholder="name@rose.local"
               />
             </div>

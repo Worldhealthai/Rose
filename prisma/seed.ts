@@ -25,15 +25,16 @@ function rnd(seed: number): number {
 async function main() {
   const today = utcMidnight();
 
-  // --- Accounts (idempotent via upsert) ---
-  const adminPass = await bcrypt.hash("rose1234", 10);
+  // --- Accounts (idempotent via upsert on username) ---
+  const adminPass = await bcrypt.hash("admin123", 10);
   const staffPass = await bcrypt.hash("staff1234", 10);
 
   await prisma.employee.upsert({
-    where: { email: "admin@rose.local" },
+    where: { username: "admin" },
     update: {},
     create: {
-      name: "Rose Manager",
+      name: "Admin",
+      username: "admin",
       email: "admin@rose.local",
       passwordHash: adminPass,
       role: "ADMIN",
@@ -43,20 +44,21 @@ async function main() {
   });
 
   const staffSeed = [
-    { name: "Maria Garcia", email: "maria@rose.local", position: "Chef", rate: 15 },
-    { name: "John Smith", email: "john@rose.local", position: "Waiter", rate: 11.5 },
-    { name: "Aisha Khan", email: "aisha@rose.local", position: "Kitchen Porter", rate: 11 },
-    { name: "Leo Rossi", email: "leo@rose.local", position: "Waiter", rate: 11.5 },
+    { name: "Maria Garcia", username: "maria", position: "Chef", rate: 15 },
+    { name: "John Smith", username: "john", position: "Waiter", rate: 11.5 },
+    { name: "Aisha Khan", username: "aisha", position: "Kitchen Porter", rate: 11 },
+    { name: "Leo Rossi", username: "leo", position: "Waiter", rate: 11.5 },
   ];
   const staff = [];
   for (const s of staffSeed) {
     staff.push(
       await prisma.employee.upsert({
-        where: { email: s.email },
+        where: { username: s.username },
         update: {},
         create: {
           name: s.name,
-          email: s.email,
+          username: s.username,
+          email: `${s.username}@rose.local`,
           passwordHash: staffPass,
           role: "STAFF",
           position: s.position,
@@ -184,8 +186,8 @@ async function main() {
   }
 
   console.log("✓ Seed complete.");
-  console.log("  Admin login:  admin@rose.local  /  rose1234");
-  console.log("  Staff login:  maria@rose.local  /  staff1234");
+  console.log("  Admin login:  username 'Admin'  /  admin123");
+  console.log("  Staff login:  username 'maria'  /  staff1234");
 }
 
 main()

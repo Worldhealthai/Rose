@@ -13,10 +13,13 @@ datasource db {
 
 /// Staff member / login account. Admins are Employees with role = ADMIN.
 /// role is "ADMIN" or "STAFF" (SQLite has no enum support).
+/// Login is by `username` (case-insensitive, stored lowercased) + password.
 model Employee {
   id           String         @id @default(cuid())
   name         String
-  email        String         @unique
+  username     String         @unique
+  email        String?
+  avatar       String? // data-URL profile picture (small, resized client-side)
   passwordHash String
   role         String         @default("STAFF")
   position     String? // e.g. Chef, Waiter, Kitchen Porter

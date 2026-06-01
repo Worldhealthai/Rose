@@ -2,7 +2,8 @@ import { requireStaff } from "@/lib/auth";
 import { money } from "@/lib/money";
 import { PageHeader, Card, SectionTitle, DetailRow } from "@/components/ui";
 import { Flash } from "@/components/Flash";
-import { updateMyContact, changeMyPassword } from "./actions";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { updateMyContact, updateMyAvatar, changeMyPassword } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +16,32 @@ export default async function ProfilePage({
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Profile" subtitle="Your details & password" />
+      <PageHeader title="Profile" subtitle="Your photo, details & password" />
       <Flash ok={searchParams.ok} error={searchParams.error} />
+
+      <Card>
+        <SectionTitle>Your photo</SectionTitle>
+        <form action={updateMyAvatar}>
+          <AvatarUpload
+            displayName={me.name}
+            current={me.avatar}
+            autoSubmit
+            size={96}
+          />
+        </form>
+        <p className="mt-3 text-xs text-ink-faint">
+          This is the photo you tap to sign in.
+        </p>
+      </Card>
 
       <Card>
         <SectionTitle>Your details</SectionTitle>
         <div className="divide-y divide-border-soft">
           <DetailRow icon="user" label="Name">
             {me.name}
+          </DetailRow>
+          <DetailRow icon="user" label="Username">
+            @{me.username}
           </DetailRow>
           <DetailRow icon="star" label="Position">
             {me.position ?? "—"}

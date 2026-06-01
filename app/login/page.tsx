@@ -1,12 +1,21 @@
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { landingPathFor } from "@/lib/auth";
-import { LoginForm } from "@/components/LoginForm";
+import { LoginPicker } from "@/components/LoginPicker";
 import { Icon } from "@/components/icons";
+
+export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
   const session = await getSession();
   if (session) redirect(landingPathFor(session.role));
+
+  const staff = await prisma.employee.findMany({
+    where: { active: true, role: "STAFF" },
+    orderBy: { name: "asc" },
+    select: { username: true, name: true, avatar: true },
+  });
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -18,12 +27,10 @@ export default async function LoginPage() {
           <h1 className="mt-4 text-2xl font-bold tracking-tight">
             Rose Restaurant
           </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Sign in to your portal
-          </p>
+          <p className="mt-1 text-sm text-ink-muted">Sign in to your portal</p>
         </div>
         <div className="card p-6">
-          <LoginForm />
+          <LoginPicker staff={staff} />
         </div>
         <p className="mt-6 text-center text-xs text-ink-faint">
           Staff &amp; management portal

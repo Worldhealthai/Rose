@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   hashPassword,
   verifyPassword,
+  cleanAvatar,
 } from "@/lib/auth";
 
 const BASE = "/staff/profile";
@@ -24,6 +25,17 @@ export async function updateMyContact(formData: FormData) {
   });
   revalidatePath(BASE);
   redirect(`${BASE}?ok=${encodeURIComponent("Profile updated.")}`);
+}
+
+export async function updateMyAvatar(formData: FormData) {
+  const me = await requireStaff();
+  await prisma.employee.update({
+    where: { id: me.id },
+    data: { avatar: cleanAvatar(formData.get("avatar")) },
+  });
+  revalidatePath(BASE);
+  revalidatePath("/staff");
+  redirect(`${BASE}?ok=${encodeURIComponent("Photo updated.")}`);
 }
 
 export async function changeMyPassword(formData: FormData) {

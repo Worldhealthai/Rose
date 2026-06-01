@@ -19,7 +19,7 @@ export default async function AdminLayout({
   const user = await requireAdmin();
   return (
     <PortalShell
-      user={{ name: user.name, role: user.role }}
+      user={{ name: user.name, role: user.role, avatar: user.avatar }}
       subtitle="Management"
       items={NAV}
       mobileNav="drawer"

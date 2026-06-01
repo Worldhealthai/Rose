@@ -3,7 +3,13 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, requireAdmin, getCurrentUser } from "@/lib/auth";
+import {
+  hashPassword,
+  requireAdmin,
+  getCurrentUser,
+  normalizeUsername,
+  cleanAvatar,
+} from "@/lib/auth";
 import { parseMoney } from "@/lib/money";
 
 const BASE = "/admin/employees";
@@ -25,12 +31,12 @@ function str(fd: FormData, key: string): string {
 export async function createEmployee(formData: FormData) {
   await requireAdmin();
   const name = str(formData, "name");
-  const email = str(formData, "email").toLowerCase();
+  const username = normalizeUsername(str(formData, "username"));
   const password = str(formData, "password");
   const role = str(formData, "role") === "ADMIN" ? "ADMIN" : "STAFF";
 
-  if (!name || !email || !password) {
-    back("Name, email and password are required.", "error");
+  if (!name || !username || !password) {
+    back("Name, username and password are required.", "error");
   }
   if (password.length < 6) {
     back("Password must be at least 6 characters.", "error");
@@ -40,7 +46,9 @@ export async function createEmployee(formData: FormData) {
     await prisma.employee.create({
       data: {
         name,
-        email,
+        username,
+        email: str(formData, "email").toLowerCase() || null,
+        avatar: cleanAvatar(formData.get("avatar")),
         passwordHash: await hashPassword(password),
         role,
         position: str(formData, "position") || null,
@@ -49,7 +57,7 @@ export async function createEmployee(formData: FormData) {
       },
     });
   } catch (e) {
-    if (isUniqueError(e)) back("That email is already in use.", "error");
+    if (isUniqueError(e)) back("That username is already taken.", "error");
     throw e;
   }
   revalidatePath(BASE);
@@ -62,12 +70,17 @@ export async function updateEmployee(formData: FormData) {
   if (!id) back("Missing employee.", "error");
   const role = str(formData, "role") === "ADMIN" ? "ADMIN" : "STAFF";
 
+  const username = normalizeUsername(str(formData, "username"));
+  if (!username) back("Username is required.", "error");
+
   try {
     await prisma.employee.update({
       where: { id },
       data: {
         name: str(formData, "name"),
-        email: str(formData, "email").toLowerCase(),
+        username,
+        email: str(formData, "email").toLowerCase() || null,
+        avatar: cleanAvatar(formData.get("avatar")),
         role,
         position: str(formData, "position") || null,
         hourlyRate: parseMoney(formData.get("hourlyRate")),
@@ -76,7 +89,7 @@ export async function updateEmployee(formData: FormData) {
       },
     });
   } catch (e) {
-    if (isUniqueError(e)) back("That email is already in use.", "error");
+    if (isUniqueError(e)) back("That username is already taken.", "error");
     throw e;
   }
   revalidatePath(BASE);

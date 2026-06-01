@@ -40,7 +40,9 @@ Forest dark-green theme throughout.
 - **Tailwind CSS** (custom forest dark-green theme, mobile-first)
 - **Prisma** ORM + **SQLite** (zero-config, file-based database)
 - Cookie session auth (signed JWT via `jose`, passwords hashed with `bcryptjs`)
-- No external services required — runs entirely on your machine.
+- **Username + password** login. Staff can set a profile photo and simply tap
+  it on the sign-in screen; managers sign in by username.
+- No external services required for local use — runs entirely on your machine.
 
 ---
 
@@ -61,10 +63,13 @@ Then open **http://localhost:3000**.
 
 ### Demo logins
 
-| Role  | Email              | Password    |
-| ----- | ------------------ | ----------- |
-| Admin | `admin@rose.local` | `rose1234`  |
-| Staff | `maria@rose.local` | `staff1234` |
+| Role  | Username | Password    |
+| ----- | -------- | ----------- |
+| Admin | `Admin`  | `admin123`  |
+| Staff | `maria`  | `staff1234` |
+
+Usernames are case-insensitive. Staff can also just tap their photo on the
+login screen and enter their password.
 
 > Change these straight away from **Settings** (admin) / **Profile** (staff),
 > and delete any demo accounts you don't need from **Team**.
@@ -87,14 +92,29 @@ Then open **http://localhost:3000**.
 
 ## Going to production
 
-1. **Change `AUTH_SECRET`** in `.env` to a long random value:
+1. **Change `AUTH_SECRET`** in `.env` (or your host's env vars) to a long random
+   value:
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
-2. The SQLite file (`prisma/dev.db`) lives next to the app. Back it up regularly.
-3. To move to a hosted database later, switch the Prisma `datasource` provider
-   to `postgresql` in `prisma/schema.prisma`, update `DATABASE_URL`, and run
-   `npm run db:push`.
+
+### Where to host
+
+The app needs a database that can be **written to** at runtime.
+
+- **A server / VPS / Railway / Render** (a long-running Node process with a disk):
+  SQLite works as-is. Deploy, set `DATABASE_URL` + `AUTH_SECRET`, run
+  `npm run setup`, then `npm run start`.
+- **Vercel / Netlify / other serverless** (the filesystem is read-only and
+  resets on every request): SQLite **won't persist** — you must use a hosted
+  database. Create a free **Postgres** (e.g. Neon or Vercel Postgres), then:
+  1. In `prisma/schema.prisma` change `provider = "sqlite"` to
+     `provider = "postgresql"`.
+  2. Set `DATABASE_URL` to the Postgres connection string (in Vercel's
+     Environment Variables) and `AUTH_SECRET` too.
+  3. Run `npx prisma db push` then `npm run seed` against that database once.
+
+The included `vercel.json` already tells Vercel to build this as a Next.js app.
 
 ---
 

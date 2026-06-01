@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "./icons";
+import { Avatar } from "./Avatar";
 import { signOut } from "@/app/login/actions";
 
 export type NavItem = {
@@ -62,7 +63,7 @@ export function PortalShell({
   mobileNav = "drawer",
   children,
 }: {
-  user: { name: string; role: string };
+  user: { name: string; role: string; avatar?: string | null };
   subtitle: string;
   items: NavItem[];
   mobileNav?: "tabs" | "drawer";
@@ -70,14 +71,6 @@ export function PortalShell({
 }) {
   const isActive = useIsActive();
   const [open, setOpen] = useState(false);
-
-  const initials = user.name
-    .split(" ")
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   return (
     <div className="min-h-screen">
@@ -107,9 +100,7 @@ export function PortalShell({
         </nav>
         <div className="mt-2 border-t border-border-soft pt-3">
           <div className="mb-2 flex items-center gap-2.5 px-2">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-forest-600/30 text-sm font-semibold text-forest-100">
-              {initials || "?"}
-            </span>
+            <Avatar name={user.name} src={user.avatar} size={36} />
             <div className="min-w-0 leading-tight">
               <p className="truncate text-sm font-medium text-ink">
                 {user.name}
@@ -135,9 +126,7 @@ export function PortalShell({
             <Icon name="menu" className="h-5 w-5" />
           </button>
         ) : (
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-forest-600/30 text-sm font-semibold text-forest-100">
-            {initials || "?"}
-          </span>
+          <Avatar name={user.name} src={user.avatar} size={36} />
         )}
       </header>
 
