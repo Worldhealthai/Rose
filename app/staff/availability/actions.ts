@@ -35,3 +35,32 @@ export async function saveAvailability(formData: FormData) {
     `/staff/availability?week=${toISODate(weekStart)}&ok=${encodeURIComponent("Availability saved.")}`,
   );
 }
+
+export async function requestTimeOff(formData: FormData) {
+  const me = await requireStaff();
+  const startDate = parseDay(String(formData.get("startDate")));
+  let endDate = parseDay(String(formData.get("endDate")));
+  if (endDate < startDate) endDate = startDate;
+  await prisma.timeOff.create({
+    data: {
+      employeeId: me.id,
+      startDate,
+      endDate,
+      note: String(formData.get("note") ?? "").trim() || null,
+    },
+  });
+  revalidatePath("/staff/availability");
+  revalidatePath("/admin/time-off");
+  revalidatePath("/admin/rota");
+  redirect(`/staff/availability?ok=${encodeURIComponent("Time-off requested.")}`);
+}
+
+export async function cancelTimeOff(formData: FormData) {
+  const me = await requireStaff();
+  const id = String(formData.get("id") ?? "");
+  if (id) await prisma.timeOff.deleteMany({ where: { id, employeeId: me.id } });
+  revalidatePath("/staff/availability");
+  revalidatePath("/admin/time-off");
+  revalidatePath("/admin/rota");
+  redirect(`/staff/availability?ok=${encodeURIComponent("Request cancelled.")}`);
+}

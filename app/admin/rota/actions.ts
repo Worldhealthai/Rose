@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { parseDay, startOfWeek, toISODate } from "@/lib/dates";
+import { parseDay, startOfWeek, addDays, toISODate } from "@/lib/dates";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -57,6 +57,31 @@ export async function updateShift(formData: FormData) {
   });
   refresh();
   weekRedirect(formData, updated.date);
+}
+
+/** Duplicate last week's shifts into the week being viewed. */
+export async function copyLastWeek(formData: FormData) {
+  await requireAdmin();
+  const week = startOfWeek(parseDay(str(formData, "week")));
+  const lastStart = addDays(week, -7);
+  const lastEnd = addDays(week, -1);
+  const prev = await prisma.shift.findMany({
+    where: { date: { gte: lastStart, lte: lastEnd } },
+  });
+  if (prev.length) {
+    await prisma.shift.createMany({
+      data: prev.map((s) => ({
+        date: addDays(s.date, 7),
+        start: s.start,
+        end: s.end,
+        role: s.role,
+        employeeId: s.employeeId,
+        published: s.published,
+      })),
+    });
+  }
+  refresh();
+  redirect(`/admin/rota?week=${toISODate(week)}`);
 }
 
 export async function deleteShift(formData: FormData) {

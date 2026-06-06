@@ -15,7 +15,7 @@ import {
 import { PageHeader, Card, StatCard, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Popover } from "@/components/Popover";
-import { createShift, updateShift, deleteShift } from "./actions";
+import { createShift, updateShift, deleteShift, copyLastWeek } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +55,7 @@ function DayCard({
   shifts,
   employees,
   prefs,
+  off,
   weekISO,
   isToday,
 }: {
@@ -62,6 +63,7 @@ function DayCard({
   shifts: ShiftWithEmployee[];
   employees: EmployeeLite[];
   prefs: PrefLite[];
+  off: string[];
   weekISO: string;
   isToday: boolean;
 }) {
@@ -79,6 +81,15 @@ function DayCard({
         </div>
         <span className="text-xs text-ink-faint">{formatShort(day)}</span>
       </div>
+
+      {off.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-1.5 rounded-xl bg-danger/10 px-2.5 py-1.5">
+          <Icon name="sun" className="h-3.5 w-3.5 text-danger" />
+          <span className="text-[11px] font-medium text-danger">
+            Off: {off.join(", ")}
+          </span>
+        </div>
+      )}
 
       {shifts.length === 0 ? (
         <p className="py-2 text-sm text-ink-faint">No shifts.</p>
@@ -200,7 +211,7 @@ export default async function RotaPage({
   const weekEnd = days[6];
   const weekISO = toISODate(weekStart);
 
-  const [shifts, employees, avail] = await Promise.all([
+  const [shifts, employees, avail, timeOff] = await Promise.all([
     prisma.shift.findMany({
       where: { date: { gte: weekStart, lte: weekEnd } },
       include: { employee: true },
@@ -213,6 +224,14 @@ export default async function RotaPage({
     }),
     prisma.availability.findMany({
       where: { weekStart, available: true },
+      include: { employee: true },
+    }),
+    prisma.timeOff.findMany({
+      where: {
+        status: "APPROVED",
+        startDate: { lte: weekEnd },
+        endDate: { gte: weekStart },
+      },
       include: { employee: true },
     }),
   ]);
@@ -229,6 +248,15 @@ export default async function RotaPage({
     });
     prefsByDay.set(a.dayOfWeek, list);
   }
+
+  // Approved time off, per weekday index
+  const offByDay = new Map<number, string[]>();
+  days.forEach((day, i) => {
+    const names = timeOff
+      .filter((o) => o.startDate <= day && o.endDate >= day)
+      .map((o) => o.employee.name);
+    if (names.length) offByDay.set(i, names);
+  });
 
   const byDay = new Map<string, ShiftWithEmployee[]>();
   for (const s of shifts) {
@@ -275,6 +303,16 @@ export default async function RotaPage({
         </Link>
       </div>
 
+      <div className="flex justify-center">
+        <form action={copyLastWeek}>
+          <input type="hidden" name="week" value={weekISO} />
+          <button className="btn-ghost text-sm">
+            <Icon name="calendar" className="h-4 w-4" />
+            Copy last week&apos;s shifts
+          </button>
+        </form>
+      </div>
+
       {/* Week summary */}
       <div className="grid grid-cols-3 gap-3">
         <StatCard label="Shifts" value={shifts.length} icon="calendar" />
@@ -310,6 +348,7 @@ export default async function RotaPage({
             shifts={byDay.get(toISODate(day)) ?? []}
             employees={employees}
             prefs={prefsByDay.get(i) ?? []}
+            off={offByDay.get(i) ?? []}
             weekISO={weekISO}
             isToday={toISODate(day) === toISODate(today)}
           />
