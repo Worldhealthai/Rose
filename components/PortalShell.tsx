@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "./icons";
 import { Avatar } from "./Avatar";
+import { Logo } from "./Logo";
 import { signOut } from "@/app/login/actions";
 
 export type NavItem = {
@@ -25,9 +26,7 @@ function useIsActive() {
 function Brand({ subtitle }: { subtitle: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-forest-500/15 text-forest-300 ring-1 ring-forest-500/25">
-        <Icon name="rose" className="h-5 w-5" />
-      </span>
+      <Logo size={36} />
       <div className="leading-tight">
         <p className="font-bold tracking-tight text-ink">Rose</p>
         <p className="text-[11px] font-medium uppercase tracking-wider text-forest-300/80">

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { landingPathFor, ensureBootstrapAdmin } from "@/lib/auth";
 import { LoginPicker } from "@/components/LoginPicker";
-import { Icon } from "@/components/icons";
+import { Logo } from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -24,11 +24,9 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-7 flex flex-col items-center text-center">
-          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-forest-500/15 text-forest-300 ring-1 ring-forest-500/25">
-            <Icon name="rose" className="h-7 w-7" />
-          </span>
+          <Logo size={104} />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">
-            Rose Restaurant
+            Rose Bar &amp; Restaurant
           </h1>
           <p className="mt-1 text-sm text-ink-muted">Sign in to your portal</p>
         </div>
