@@ -1,23 +1,11 @@
-import { Card, SectionTitle, EmptyState } from "./ui";
+import { EmptyState } from "./ui";
 import { Icon } from "./icons";
-import { ToggleCheck } from "./ToggleCheck";
+import { ChecklistClient } from "./ChecklistClient";
 import type { Dict } from "@/lib/i18n";
-import {
-  toggleTaskToday,
-  createTask,
-  updateTask,
-  deleteTask,
-} from "@/app/admin/checklist/actions";
+import { createTask, updateTask, deleteTask } from "@/app/admin/checklist/actions";
 
-export type ChecklistItem = {
-  id: string;
-  title: string;
-  area: string | null;
-  done: boolean;
-  doneByName: string | null;
-  assigneeId: string | null;
-  assigneeName: string | null;
-};
+export type { ChecklistItem } from "./ChecklistClient";
+import type { ChecklistItem } from "./ChecklistClient";
 
 type EmployeeLite = { id: string; name: string };
 
@@ -51,20 +39,6 @@ export function ChecklistView({
   isAdmin?: boolean;
   employees?: EmployeeLite[];
 }) {
-  const doneCount = items.filter((i) => i.done).length;
-
-  const groups = new Map<string, ChecklistItem[]>();
-  for (const it of items) {
-    const key = it.area || t.general;
-    (groups.get(key) ?? groups.set(key, []).get(key)!).push(it);
-  }
-
-  function subtitleFor(it: ChecklistItem): string | undefined {
-    if (it.done && it.doneByName) return `${t.doneBy} ${it.doneByName}`;
-    if (it.assigneeId) return isAdmin ? `For ${it.assigneeName}` : t.forYou;
-    return undefined;
-  }
-
   return (
     <div className="space-y-5">
       {items.length === 0 ? (
@@ -78,42 +52,7 @@ export function ChecklistView({
           }
         />
       ) : (
-        <>
-          <Card>
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm text-ink-muted">{t.progress}</span>
-              <span className="text-sm font-semibold text-forest-200">
-                {doneCount}/{items.length} {t.done}
-              </span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-border-soft">
-              <div
-                className="h-full rounded-full bg-forest-500 transition-all"
-                style={{
-                  width: `${items.length ? (doneCount / items.length) * 100 : 0}%`,
-                }}
-              />
-            </div>
-          </Card>
-
-          {[...groups.entries()].map(([area, list]) => (
-            <div key={area}>
-              <SectionTitle>{area}</SectionTitle>
-              <div className="space-y-2">
-                {list.map((it) => (
-                  <ToggleCheck
-                    key={it.id}
-                    action={toggleTaskToday}
-                    fields={{ taskId: it.id }}
-                    checked={it.done}
-                    title={it.title}
-                    subtitle={subtitleFor(it)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </>
+        <ChecklistClient items={items} t={t} isAdmin={isAdmin} />
       )}
 
       {isAdmin && (
