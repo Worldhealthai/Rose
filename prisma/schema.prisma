@@ -30,11 +30,12 @@ model Employee {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
-  shifts        Shift[]
-  availability  Availability[]
-  assignedTasks Task[]         @relation("AssignedTasks")
-  timeOff       TimeOff[]      @relation("TimeOff")
-  expenses      Expense[]
+  shifts            Shift[]
+  availability      Availability[]
+  assignedTasks     Task[]             @relation("AssignedTasks")
+  timeOff           TimeOff[]          @relation("TimeOff")
+  expenses          Expense[]
+  pushSubscriptions PushSubscription[]
 }
 
 /// A scheduled shift. employeeId null = open/unassigned slot.
@@ -184,6 +185,17 @@ model Notification {
 
   @@index([read])
   @@index([createdAt])
+}
+
+/// A browser/phone push subscription (Web Push) for delivering notifications.
+model PushSubscription {
+  id         String    @id @default(cuid())
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
 }
 
 /// A recurring daily checklist task (e.g. "Clean beer keg").

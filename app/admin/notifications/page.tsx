@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { PageHeader, Card, EmptyState } from "@/components/ui";
+import { PageHeader, Card, EmptyState, SectionTitle } from "@/components/ui";
 import { Icon, type IconName } from "@/components/icons";
+import { PushToggle } from "@/components/PushToggle";
 import { markAllRead, clearNotifications } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,14 @@ export default async function NotificationsPage() {
           ) : undefined
         }
       />
+
+      <Card>
+        <SectionTitle>Phone alerts</SectionTitle>
+        <p className="mb-3 text-sm text-ink-muted">
+          Get a notification on this device even when Rose is closed.
+        </p>
+        <PushToggle vapidKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY} />
+      </Card>
 
       {items.length === 0 ? (
         <EmptyState

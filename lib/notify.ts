@@ -1,9 +1,10 @@
 import "server-only";
 import { prisma } from "./prisma";
+import { sendPushToAdmins } from "./push";
 
 /**
- * Create an admin-facing notification. Best-effort: never let a failed
- * notification break the user's action.
+ * Create an admin-facing notification (and send a phone push). Best-effort:
+ * never let a failed notification break the user's action.
  */
 export async function createNotification(
   type: "availability" | "timeoff" | "order",
@@ -17,6 +18,11 @@ export async function createNotification(
   } catch {
     // ignore
   }
+  await sendPushToAdmins({
+    title: "Rose",
+    body: message,
+    url: link ?? "/admin/notifications",
+  });
 }
 
 export function getUnreadNotifications() {
