@@ -1,6 +1,7 @@
 import { Card, SectionTitle, EmptyState } from "./ui";
 import { Icon } from "./icons";
 import { ToggleCheck } from "./ToggleCheck";
+import type { Dict } from "@/lib/i18n";
 import {
   toggleTaskToday,
   createTask,
@@ -41,10 +42,12 @@ function AssigneeSelect({
 
 export function ChecklistView({
   items,
+  t,
   isAdmin = false,
   employees = [],
 }: {
   items: ChecklistItem[];
+  t: Dict["checklist"];
   isAdmin?: boolean;
   employees?: EmployeeLite[];
 }) {
@@ -52,13 +55,13 @@ export function ChecklistView({
 
   const groups = new Map<string, ChecklistItem[]>();
   for (const it of items) {
-    const key = it.area || "General";
+    const key = it.area || t.general;
     (groups.get(key) ?? groups.set(key, []).get(key)!).push(it);
   }
 
   function subtitleFor(it: ChecklistItem): string | undefined {
-    if (it.done && it.doneByName) return `Done by ${it.doneByName}`;
-    if (it.assigneeId) return isAdmin ? `For ${it.assigneeName}` : "For you";
+    if (it.done && it.doneByName) return `${t.doneBy} ${it.doneByName}`;
+    if (it.assigneeId) return isAdmin ? `For ${it.assigneeName}` : t.forYou;
     return undefined;
   }
 
@@ -67,20 +70,20 @@ export function ChecklistView({
       {items.length === 0 ? (
         <EmptyState
           icon="check"
-          title="No tasks yet"
+          title={t.noTasks}
           hint={
             isAdmin
               ? "Add daily jobs below — they reset every morning."
-              : "Your manager hasn't added any tasks for you yet."
+              : t.noTasksStaff
           }
         />
       ) : (
         <>
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm text-ink-muted">Today&apos;s progress</span>
+              <span className="text-sm text-ink-muted">{t.progress}</span>
               <span className="text-sm font-semibold text-forest-200">
-                {doneCount}/{items.length} done
+                {doneCount}/{items.length} {t.done}
               </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-border-soft">

@@ -5,14 +5,16 @@ import { useFormState, useFormStatus } from "react-dom";
 import { signIn } from "@/app/login/actions";
 import { Avatar } from "./Avatar";
 import { Icon } from "./icons";
+import type { Dict } from "@/lib/i18n";
 
 type StaffTile = { username: string; name: string; avatar: string | null };
+type T = Dict["login"];
 
-function SubmitButton({ label }: { label: string }) {
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" className="btn-primary w-full" disabled={pending}>
-      {pending ? "Signing in…" : label}
+      {pending ? pendingLabel : label}
     </button>
   );
 }
@@ -27,18 +29,17 @@ function ErrorNote({ error }: { error?: string }) {
   );
 }
 
-export function LoginPicker({ staff }: { staff: StaffTile[] }) {
+export function LoginPicker({ staff, t }: { staff: StaffTile[]; t: T }) {
   const [error, formAction] = useFormState(signIn, undefined);
   const [selected, setSelected] = useState<StaffTile | null>(null);
   const [manual, setManual] = useState(staff.length === 0);
 
-  // Manager / manual username + password
   if (manual) {
     return (
       <form action={formAction} className="space-y-4">
         <div>
           <label className="label" htmlFor="username">
-            Username
+            {t.username}
           </label>
           <input
             id="username"
@@ -48,12 +49,12 @@ export function LoginPicker({ staff }: { staff: StaffTile[] }) {
             autoFocus
             required
             className="input"
-            placeholder="e.g. Admin"
+            placeholder="Admin"
           />
         </div>
         <div>
           <label className="label" htmlFor="password">
-            Password
+            {t.password}
           </label>
           <input
             id="password"
@@ -66,21 +67,20 @@ export function LoginPicker({ staff }: { staff: StaffTile[] }) {
           />
         </div>
         <ErrorNote error={error} />
-        <SubmitButton label="Sign in" />
+        <SubmitButton label={t.signIn} pendingLabel={t.signingIn} />
         {staff.length > 0 && (
           <button
             type="button"
             onClick={() => setManual(false)}
             className="w-full text-center text-sm text-ink-muted hover:text-ink"
           >
-            ← Back to staff sign-in
+            {t.backToStaff}
           </button>
         )}
       </form>
     );
   }
 
-  // Password step for a chosen staff member
   if (selected) {
     return (
       <form action={formAction} className="space-y-4">
@@ -91,7 +91,7 @@ export function LoginPicker({ staff }: { staff: StaffTile[] }) {
         <input type="hidden" name="username" value={selected.username} />
         <div>
           <label className="label" htmlFor="password">
-            Your password
+            {t.yourPassword}
           </label>
           <input
             id="password"
@@ -105,22 +105,21 @@ export function LoginPicker({ staff }: { staff: StaffTile[] }) {
           />
         </div>
         <ErrorNote error={error} />
-        <SubmitButton label="Sign in" />
+        <SubmitButton label={t.signIn} pendingLabel={t.signingIn} />
         <button
           type="button"
           onClick={() => setSelected(null)}
           className="w-full text-center text-sm text-ink-muted hover:text-ink"
         >
-          ← Choose someone else
+          {t.chooseSomeoneElse}
         </button>
       </form>
     );
   }
 
-  // Tile grid — tap your photo
   return (
     <div className="space-y-4">
-      <p className="text-center text-sm text-ink-muted">Tap your photo to sign in</p>
+      <p className="text-center text-sm text-ink-muted">{t.tapPhoto}</p>
       <div className="grid grid-cols-3 gap-3">
         {staff.map((s) => (
           <button
@@ -142,7 +141,7 @@ export function LoginPicker({ staff }: { staff: StaffTile[] }) {
         className="btn-secondary w-full"
       >
         <Icon name="user" className="h-4 w-4" />
-        Manager / username sign-in
+        {t.managerSignIn}
       </button>
     </div>
   );

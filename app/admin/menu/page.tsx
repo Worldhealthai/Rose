@@ -1,4 +1,5 @@
 import { getMenuItems } from "@/lib/ops";
+import { getDict } from "@/lib/i18n";
 import { MenuView } from "@/components/MenuView";
 import { PageHeader } from "@/components/ui";
 import { Flash } from "@/components/Flash";
@@ -15,7 +16,7 @@ export default async function AdminMenuPage({
     <div>
       <PageHeader title="Menu" subtitle="Dishes & availability" />
       <Flash ok={searchParams.ok} error={searchParams.error} />
-      <MenuView items={items} isAdmin />
+      <MenuView items={items} t={getDict("en").menu} isAdmin />
     </div>
   );
 }

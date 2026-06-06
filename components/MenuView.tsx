@@ -4,6 +4,7 @@ import { ToggleCheck } from "./ToggleCheck";
 import { Popover } from "./Popover";
 import { RefreshForm, RefreshButton, SubmitButton } from "./forms";
 import { money } from "@/lib/money";
+import type { Dict } from "@/lib/i18n";
 import {
   toggleMenuAvailable,
   toggleMenuPlatform,
@@ -33,9 +34,11 @@ const PLATFORMS = [
 
 export function MenuView({
   items,
+  t,
   isAdmin = false,
 }: {
   items: Item[];
+  t: Dict["menu"];
   isAdmin?: boolean;
 }) {
   const off = items.filter((i) => !i.available);
@@ -44,7 +47,7 @@ export function MenuView({
   // Group available items by category
   const groups = new Map<string, Item[]>();
   for (const it of on) {
-    const key = it.category || "Menu";
+    const key = it.category || t.title;
     (groups.get(key) ?? groups.set(key, []).get(key)!).push(it);
   }
 
@@ -53,7 +56,9 @@ export function MenuView({
       {/* 86'd items */}
       {off.length > 0 && (
         <div>
-          <SectionTitle>Off the menu ({off.length})</SectionTitle>
+          <SectionTitle>
+            {t.offMenu} ({off.length})
+          </SectionTitle>
           <div className="space-y-3">
             {off.map((it) => (
               <div
@@ -74,12 +79,10 @@ export function MenuView({
                     pendingLabel="…"
                   >
                     <Icon name="check" className="h-4 w-4" />
-                    Back on
+                    {t.backOn}
                   </RefreshButton>
                 </div>
-                <p className="mt-2 text-xs text-warning">
-                  Order what&apos;s needed, then tick each app you&apos;ve removed it from:
-                </p>
+                <p className="mt-2 text-xs text-warning">{t.reminder}</p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-3">
                   {PLATFORMS.map((p) => (
                     <ToggleCheck
@@ -97,10 +100,10 @@ export function MenuView({
                   <input
                     name="note"
                     defaultValue={it.unavailableNote ?? ""}
-                    placeholder="What's needed to bring it back?"
+                    placeholder={t.whatsNeeded}
                     className="input !py-1.5 text-sm"
                   />
-                  <SubmitButton className="btn-secondary !py-1.5">Save</SubmitButton>
+                  <SubmitButton className="btn-secondary !py-1.5">{t.save}</SubmitButton>
                 </RefreshForm>
               </div>
             ))}
@@ -112,12 +115,8 @@ export function MenuView({
       {items.length === 0 ? (
         <EmptyState
           icon="alert"
-          title="No menu items yet"
-          hint={
-            isAdmin
-              ? "Add your dishes below."
-              : "Your manager hasn't added the menu yet."
-          }
+          title={t.noItems}
+          hint={isAdmin ? "Add your dishes below." : t.noItemsStaff}
         />
       ) : (
         [...groups.entries()].map(([cat, list]) => (
@@ -140,7 +139,7 @@ export function MenuView({
                         className="btn-secondary !py-1.5 text-warning"
                         pendingLabel="…"
                       >
-                        Mark off
+                        {t.markOff}
                       </RefreshButton>
                       {isAdmin && (
                         <Popover title="Edit item">

@@ -60,19 +60,21 @@ export function PortalShell({
   subtitle,
   items,
   mobileNav = "drawer",
+  dir = "ltr",
   children,
 }: {
   user: { name: string; role: string; avatar?: string | null };
   subtitle: string;
   items: NavItem[];
   mobileNav?: "tabs" | "drawer";
+  dir?: "ltr" | "rtl";
   children: React.ReactNode;
 }) {
   const isActive = useIsActive();
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" dir={dir}>
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border-soft bg-surface/70 p-4 backdrop-blur md:flex">
         <div className="px-2 py-2">

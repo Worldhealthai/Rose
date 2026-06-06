@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
+import { getLocale } from "@/lib/locale";
+import { getDict } from "@/lib/i18n";
 import { PageHeader, Card, SectionTitle, DetailRow } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
@@ -14,46 +16,38 @@ export default async function ProfilePage({
   searchParams: { ok?: string; error?: string };
 }) {
   const me = await requireStaff();
+  const t = getDict(getLocale()).profile;
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Profile" subtitle="Your photo, details & password" />
+      <PageHeader title={t.title} subtitle={t.subtitle} />
       <Flash ok={searchParams.ok} error={searchParams.error} />
 
       <Card>
-        <SectionTitle>Your photo</SectionTitle>
+        <SectionTitle>{t.yourPhoto}</SectionTitle>
         <form action={updateMyAvatar}>
-          <AvatarUpload
-            displayName={me.name}
-            current={me.avatar}
-            autoSubmit
-            size={96}
-          />
+          <AvatarUpload displayName={me.name} current={me.avatar} autoSubmit size={96} />
         </form>
-        <p className="mt-3 text-xs text-ink-faint">
-          This is the photo you tap to sign in.
-        </p>
+        <p className="mt-3 text-xs text-ink-faint">{t.photoHint}</p>
       </Card>
 
       <Card>
-        <SectionTitle>Your details</SectionTitle>
+        <SectionTitle>{t.yourDetails}</SectionTitle>
         <div className="divide-y divide-border-soft">
-          <DetailRow icon="user" label="Name">
+          <DetailRow icon="user" label={t.name}>
             {me.name}
           </DetailRow>
-          <DetailRow icon="user" label="Username">
+          <DetailRow icon="user" label={t.username}>
             @{me.username}
           </DetailRow>
-          <DetailRow icon="star" label="Position">
+          <DetailRow icon="star" label={t.position}>
             {me.position ?? "—"}
           </DetailRow>
-          <DetailRow icon="mail" label="Email">
+          <DetailRow icon="mail" label={t.email}>
             {me.email ?? "—"}
           </DetailRow>
         </div>
-        <p className="mt-3 text-xs text-ink-faint">
-          Your name and position are managed by your manager.
-        </p>
+        <p className="mt-3 text-xs text-ink-faint">{t.managedByManager}</p>
       </Card>
 
       <Link
@@ -64,17 +58,17 @@ export default async function ProfilePage({
           <Icon name="star" className="h-5 w-5" />
         </span>
         <div className="flex-1">
-          <p className="font-semibold text-ink">My availability</p>
-          <p className="text-sm text-ink-muted">Set when you can work each week.</p>
+          <p className="font-semibold text-ink">{t.myAvailability}</p>
+          <p className="text-sm text-ink-muted">{t.availabilityHint}</p>
         </div>
         <Icon name="chevronRight" className="h-5 w-5 text-ink-faint" />
       </Link>
 
       <Card>
-        <SectionTitle>Contact number</SectionTitle>
+        <SectionTitle>{t.contactNumber}</SectionTitle>
         <form action={updateMyContact} className="flex items-end gap-2">
           <div className="flex-1">
-            <label className="label">Phone</label>
+            <label className="label">{t.phone}</label>
             <input
               name="phone"
               defaultValue={me.phone ?? ""}
@@ -83,15 +77,15 @@ export default async function ProfilePage({
               inputMode="tel"
             />
           </div>
-          <button className="btn-primary">Save</button>
+          <button className="btn-primary">{t.save}</button>
         </form>
       </Card>
 
       <Card>
-        <SectionTitle>Change password</SectionTitle>
+        <SectionTitle>{t.changePassword}</SectionTitle>
         <form action={changeMyPassword} className="space-y-3">
           <div>
-            <label className="label">Current password</label>
+            <label className="label">{t.currentPassword}</label>
             <input
               name="current"
               type="password"
@@ -101,7 +95,7 @@ export default async function ProfilePage({
             />
           </div>
           <div>
-            <label className="label">New password</label>
+            <label className="label">{t.newPassword}</label>
             <input
               name="next"
               type="password"
@@ -111,7 +105,7 @@ export default async function ProfilePage({
               required
             />
           </div>
-          <button className="btn-primary">Update password</button>
+          <button className="btn-primary">{t.updatePassword}</button>
         </form>
       </Card>
     </div>

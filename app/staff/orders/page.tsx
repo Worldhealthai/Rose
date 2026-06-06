@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
+import { getLocale } from "@/lib/locale";
+import { getDict } from "@/lib/i18n";
+import { PageHeader, Card, EmptyState } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { QuantityInput } from "@/components/QuantityInput";
 import { ToggleCheck } from "@/components/ToggleCheck";
@@ -19,6 +21,7 @@ export default async function StaffOrdersPage({
   searchParams: { filter?: string };
 }) {
   await requireStaff();
+  const t = getDict(getLocale()).orders;
   const onlyNeeded = searchParams.filter === "needed";
   const returnTo = `/staff/orders${onlyNeeded ? "?filter=needed" : ""}`;
 
@@ -40,11 +43,11 @@ export default async function StaffOrdersPage({
     if (items.length) groups.push({ name: s.name, items });
   }
   const orphan = visible.filter((p) => !p.supplierId);
-  if (orphan.length) groups.push({ name: "Other", items: orphan });
+  if (orphan.length) groups.push({ name: "—", items: orphan });
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Orders" subtitle="Flag anything we're running low on" />
+      <PageHeader title={t.title} subtitle={t.subtitle} />
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm text-ink-muted">
@@ -52,7 +55,8 @@ export default async function StaffOrdersPage({
             <Icon name="cart" className="h-5 w-5" />
           </span>
           <span>
-            <span className="font-semibold text-ink">{neededTotal}</span> to order
+            <span className="font-semibold text-ink">{neededTotal}</span>{" "}
+            {t.toOrder}
           </span>
         </div>
         <div className="flex rounded-xl border border-border p-0.5 text-sm">
@@ -60,34 +64,33 @@ export default async function StaffOrdersPage({
             href="/staff/orders"
             className={`rounded-lg px-3 py-1.5 font-medium ${!onlyNeeded ? "bg-forest-500/20 text-forest-100" : "text-ink-muted"}`}
           >
-            All
+            {t.all}
           </Link>
           <Link
             href="/staff/orders?filter=needed"
             className={`rounded-lg px-3 py-1.5 font-medium ${onlyNeeded ? "bg-forest-500/20 text-forest-100" : "text-ink-muted"}`}
           >
-            To order
+            {t.toOrderTab}
           </Link>
         </div>
       </div>
 
-      {/* Add item */}
       <details className="card p-0">
         <summary className="flex cursor-pointer list-none items-center gap-2 p-4 font-semibold text-forest-200">
           <Icon name="plus" className="h-5 w-5" />
-          Add an item
+          {t.addItem}
         </summary>
         <form action={createProduct} className="grid gap-3 border-t border-border-soft p-4 sm:grid-cols-2">
           <input type="hidden" name="returnTo" value={returnTo} />
           <input type="hidden" name="needed" value="on" />
           <div className="sm:col-span-2">
-            <label className="label">What do we need?</label>
-            <input name="name" className="input" required placeholder="e.g. Chicken" />
+            <label className="label">{t.whatDoWeNeed}</label>
+            <input name="name" className="input" required placeholder="…" />
           </div>
           <div className="sm:col-span-2">
-            <label className="label">Supplier (optional)</label>
+            <label className="label">{t.supplier}</label>
             <select name="supplierId" defaultValue="" className="input">
-              <option value="">Not sure / other</option>
+              <option value="">{t.notSure}</option>
               {suppliers.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -96,7 +99,7 @@ export default async function StaffOrdersPage({
             </select>
           </div>
           <div className="sm:col-span-2">
-            <button className="btn-primary">Add to order list</button>
+            <button className="btn-primary">{t.addToList}</button>
           </div>
         </form>
       </details>
@@ -104,12 +107,8 @@ export default async function StaffOrdersPage({
       {groups.length === 0 ? (
         <EmptyState
           icon="cart"
-          title={onlyNeeded ? "Nothing to order" : "No items yet"}
-          hint={
-            onlyNeeded
-              ? "Tap an item below to add it to the order list as you run low."
-              : "Add the things we use so you can flag them when they run low."
-          }
+          title={onlyNeeded ? t.nothingToOrder : t.noItems}
+          hint={onlyNeeded ? t.nothingHint : t.noItemsHint}
         />
       ) : (
         <div className="space-y-4">

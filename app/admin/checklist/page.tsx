@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getChecklistToday } from "@/lib/ops";
+import { getDict } from "@/lib/i18n";
 import { ChecklistView } from "@/components/ChecklistView";
 import { PageHeader } from "@/components/ui";
 import { Flash } from "@/components/Flash";
@@ -23,7 +24,12 @@ export default async function AdminChecklistPage({
     <div>
       <PageHeader title="Daily checklist" subtitle="Jobs to be done — resets each day" />
       <Flash ok={searchParams.ok} error={searchParams.error} />
-      <ChecklistView items={items} isAdmin employees={employees} />
+      <ChecklistView
+        items={items}
+        t={getDict("en").checklist}
+        isAdmin
+        employees={employees}
+      />
     </div>
   );
 }
