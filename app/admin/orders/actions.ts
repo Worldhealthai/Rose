@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireUser } from "@/lib/auth";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -11,7 +11,7 @@ function str(fd: FormData, key: string): string {
 
 function safeReturn(fd: FormData, fallback = "/admin/orders"): string {
   const r = String(fd.get("returnTo") ?? "");
-  return r.startsWith("/admin") ? r : fallback;
+  return r.startsWith("/admin") || r.startsWith("/staff") ? r : fallback;
 }
 
 function revalidateFor(supplierId?: string | null) {
@@ -21,7 +21,7 @@ function revalidateFor(supplierId?: string | null) {
 }
 
 export async function createProduct(formData: FormData) {
-  await requireAdmin();
+  await requireUser();
   const name = str(formData, "name");
   const returnTo = safeReturn(formData);
   if (!name) redirect(returnTo);
@@ -72,7 +72,7 @@ export async function deleteProduct(formData: FormData) {
 
 /** Flip a product's "needed" flag. Stays in place (no redirect). */
 export async function toggleProductNeeded(formData: FormData) {
-  await requireAdmin();
+  await requireUser();
   const id = str(formData, "id");
   if (!id) return;
   const p = await prisma.product.findUnique({ where: { id } });
@@ -86,7 +86,7 @@ export async function toggleProductNeeded(formData: FormData) {
 
 /** Save the "how much to order" note for a needed product. */
 export async function setNeededNote(formData: FormData) {
-  await requireAdmin();
+  await requireUser();
   const id = str(formData, "id");
   if (!id) return;
   const p = await prisma.product.update({

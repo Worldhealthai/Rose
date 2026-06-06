@@ -25,7 +25,9 @@ export type IconName =
   | "trend"
   | "edit"
   | "alert"
-  | "menu";
+  | "menu"
+  | "clipboard"
+  | "book";
 
 const PATHS: Record<IconName, JSX.Element> = {
   dashboard: (
@@ -146,6 +148,18 @@ const PATHS: Record<IconName, JSX.Element> = {
     </>
   ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  clipboard: (
+    <>
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 4.5h6V7H9zM8.5 12l2 2 4-4" />
+    </>
+  ),
+  book: (
+    <>
+      <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H12v15H5.5A1.5 1.5 0 0 0 4 20.5z" />
+      <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H12v15h6.5a1.5 1.5 0 0 1 1.5 1.5z" />
+    </>
+  ),
 };
 
 export function Icon({

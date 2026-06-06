@@ -219,6 +219,44 @@ export default async function AdminDashboard() {
           </div>
         </Link>
       )}
+
+      {d.counts.tasksOpen > 0 && (
+        <Link href="/admin/checklist" className="block">
+          <div className="card flex items-center gap-3 p-4 transition hover:bg-elevated/50">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-forest-500/15 text-forest-300">
+              <Icon name="clipboard" className="h-5 w-5" />
+            </span>
+            <div className="flex-1">
+              <p className="font-semibold text-ink">
+                {d.counts.tasksOpen} task{d.counts.tasksOpen === 1 ? "" : "s"} left
+                today
+              </p>
+              <p className="text-sm text-ink-muted">Check the daily checklist.</p>
+            </div>
+            <Icon name="chevronRight" className="h-5 w-5 text-ink-faint" />
+          </div>
+        </Link>
+      )}
+
+      {d.counts.menuOff > 0 && (
+        <Link href="/admin/menu" className="block">
+          <div className="card flex items-center gap-3 border-warning/30 bg-warning/10 p-4 transition hover:bg-warning/15">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-warning/20 text-warning">
+              <Icon name="book" className="h-5 w-5" />
+            </span>
+            <div className="flex-1">
+              <p className="font-semibold text-ink">
+                {d.counts.menuOff} item{d.counts.menuOff === 1 ? "" : "s"} off the
+                menu
+              </p>
+              <p className="text-sm text-ink-muted">
+                Order ingredients &amp; update the apps.
+              </p>
+            </div>
+            <Icon name="chevronRight" className="h-5 w-5 text-ink-faint" />
+          </div>
+        </Link>
+      )}
     </div>
   );
 }

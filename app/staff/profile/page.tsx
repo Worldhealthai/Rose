@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
-import { money } from "@/lib/money";
 import { PageHeader, Card, SectionTitle, DetailRow } from "@/components/ui";
 import { Flash } from "@/components/Flash";
+import { Icon } from "@/components/icons";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { updateMyContact, updateMyAvatar, changeMyPassword } from "./actions";
 
@@ -46,17 +47,28 @@ export default async function ProfilePage({
           <DetailRow icon="star" label="Position">
             {me.position ?? "—"}
           </DetailRow>
-          <DetailRow icon="cash" label="Rate">
-            {money(me.hourlyRate)}/hr
-          </DetailRow>
           <DetailRow icon="mail" label="Email">
-            {me.email}
+            {me.email ?? "—"}
           </DetailRow>
         </div>
         <p className="mt-3 text-xs text-ink-faint">
-          Your name, position and pay rate are managed by your manager.
+          Your name and position are managed by your manager.
         </p>
       </Card>
+
+      <Link
+        href="/staff/availability"
+        className="card flex items-center gap-3 p-4 transition hover:bg-elevated/40"
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-forest-500/15 text-forest-300">
+          <Icon name="star" className="h-5 w-5" />
+        </span>
+        <div className="flex-1">
+          <p className="font-semibold text-ink">My availability</p>
+          <p className="text-sm text-ink-muted">Set when you can work each week.</p>
+        </div>
+        <Icon name="chevronRight" className="h-5 w-5 text-ink-faint" />
+      </Link>
 
       <Card>
         <SectionTitle>Contact number</SectionTitle>

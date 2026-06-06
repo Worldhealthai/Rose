@@ -3,8 +3,10 @@ import { PortalShell, type NavItem } from "@/components/PortalShell";
 
 const NAV: NavItem[] = [
   { href: "/staff", label: "Shifts", icon: "calendar", exact: true },
-  { href: "/staff/availability", label: "Availability", icon: "star" },
-  { href: "/staff/profile", label: "Profile", icon: "user" },
+  { href: "/staff/checklist", label: "Tasks", icon: "clipboard" },
+  { href: "/staff/menu", label: "Menu", icon: "book" },
+  { href: "/staff/orders", label: "Orders", icon: "cart" },
+  { href: "/staff/profile", label: "You", icon: "user" },
 ];
 
 export default async function StaffLayout({

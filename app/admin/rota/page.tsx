@@ -22,6 +22,12 @@ type ShiftWithEmployee = Awaited<
   ReturnType<typeof prisma.shift.findMany<{ include: { employee: true } }>>
 >[number];
 type EmployeeLite = { id: string; name: string; position: string | null };
+type PrefLite = {
+  name: string;
+  start: string | null;
+  end: string | null;
+  note: string | null;
+};
 
 function EmployeeSelect({
   employees,
@@ -47,12 +53,14 @@ function DayCard({
   day,
   shifts,
   employees,
+  prefs,
   weekISO,
   isToday,
 }: {
   day: Date;
   shifts: ShiftWithEmployee[];
   employees: EmployeeLite[];
+  prefs: PrefLite[];
   weekISO: string;
   isToday: boolean;
 }) {
@@ -144,6 +152,25 @@ function DayCard({
         </ul>
       )}
 
+      {prefs.length > 0 && (
+        <div className="mt-2 rounded-xl bg-canvas/40 p-2.5">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+            Available this week
+          </p>
+          <ul className="space-y-0.5">
+            {prefs.map((p, i) => (
+              <li key={i} className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-ink">{p.name}</span>
+                <span className="text-right text-ink-faint">
+                  {p.start && p.end ? `${p.start}–${p.end}` : "any time"}
+                  {p.note ? ` · ${p.note}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <details className="mt-2">
         <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-forest-300">
           <Icon name="plus" className="h-4 w-4" />
@@ -183,7 +210,7 @@ export default async function RotaPage({
   const weekEnd = days[6];
   const weekISO = toISODate(weekStart);
 
-  const [shifts, employees] = await Promise.all([
+  const [shifts, employees, avail] = await Promise.all([
     prisma.shift.findMany({
       where: { date: { gte: weekStart, lte: weekEnd } },
       include: { employee: true },
@@ -194,7 +221,24 @@ export default async function RotaPage({
       orderBy: { name: "asc" },
       select: { id: true, name: true, position: true },
     }),
+    prisma.availability.findMany({
+      where: { weekStart, available: true },
+      include: { employee: true },
+    }),
   ]);
+
+  // Staff preferences for this week, grouped by weekday (0 = Mon ... 6 = Sun)
+  const prefsByDay = new Map<number, PrefLite[]>();
+  for (const a of avail) {
+    const list = prefsByDay.get(a.dayOfWeek) ?? [];
+    list.push({
+      name: a.employee.name,
+      start: a.preferredStart,
+      end: a.preferredEnd,
+      note: a.note,
+    });
+    prefsByDay.set(a.dayOfWeek, list);
+  }
 
   const byDay = new Map<string, ShiftWithEmployee[]>();
   for (const s of shifts) {
@@ -269,12 +313,13 @@ export default async function RotaPage({
 
       {/* Days */}
       <div className="grid gap-3 md:grid-cols-2">
-        {days.map((day) => (
+        {days.map((day, i) => (
           <DayCard
             key={toISODate(day)}
             day={day}
             shifts={byDay.get(toISODate(day)) ?? []}
             employees={employees}
+            prefs={prefsByDay.get(i) ?? []}
             weekISO={weekISO}
             isToday={toISODate(day) === toISODate(today)}
           />

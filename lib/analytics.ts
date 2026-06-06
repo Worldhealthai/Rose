@@ -25,21 +25,32 @@ export async function getDashboardData() {
     a < b ? a : b,
   );
 
-  const [incomes, weekShifts, activeStaff, suppliers, productsNeeded] =
-    await Promise.all([
-      prisma.dailyIncome.findMany({
-        where: { date: { gte: fetchStart, lte: today } },
-        orderBy: { date: "asc" },
-      }),
-      prisma.shift.findMany({
-        where: { date: { gte: weekStart, lte: weekEnd } },
-        include: { employee: true },
-        orderBy: { start: "asc" },
-      }),
-      prisma.employee.count({ where: { active: true } }),
-      prisma.supplier.count(),
-      prisma.product.count({ where: { needed: true } }),
-    ]);
+  const [
+    incomes,
+    weekShifts,
+    activeStaff,
+    suppliers,
+    productsNeeded,
+    menuOff,
+    tasksActive,
+    tasksDoneToday,
+  ] = await Promise.all([
+    prisma.dailyIncome.findMany({
+      where: { date: { gte: fetchStart, lte: today } },
+      orderBy: { date: "asc" },
+    }),
+    prisma.shift.findMany({
+      where: { date: { gte: weekStart, lte: weekEnd } },
+      include: { employee: true },
+      orderBy: { start: "asc" },
+    }),
+    prisma.employee.count({ where: { active: true } }),
+    prisma.supplier.count(),
+    prisma.product.count({ where: { needed: true } }),
+    prisma.menuItem.count({ where: { available: false } }),
+    prisma.task.count({ where: { active: true } }),
+    prisma.taskCompletion.count({ where: { date: today } }),
+  ]);
 
   const byDay = new Map(incomes.map((i) => [toISODate(i.date), i]));
   const get = (d: Date) => byDay.get(toISODate(d)) ?? ZERO;
@@ -95,7 +106,14 @@ export async function getDashboardData() {
     weekLabour,
     weekLabourPct: pct(weekLabour, weekSum.total),
     todayShifts,
-    counts: { activeStaff, suppliers, productsNeeded },
+    counts: {
+      activeStaff,
+      suppliers,
+      productsNeeded,
+      menuOff,
+      tasksTotal: tasksActive,
+      tasksOpen: Math.max(0, tasksActive - tasksDoneToday),
+    },
     bestDay: bestDay
       ? { date: bestDay.date, total: incomeTotal(bestDay) }
       : null,

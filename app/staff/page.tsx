@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { money } from "@/lib/money";
 import { shiftHours } from "@/lib/calc";
 import {
   today as todayFn,
@@ -23,8 +23,6 @@ export default async function StaffHome() {
   const me = await requireStaff();
   const today = todayFn();
   const week = weekDays(today);
-  const weekStart = week[0];
-  const weekEnd = week[6];
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);
 
@@ -35,7 +33,7 @@ export default async function StaffHome() {
       take: 40,
     }),
     prisma.shift.findMany({
-      where: { employeeId: me.id, date: { gte: weekStart, lte: weekEnd } },
+      where: { employeeId: me.id, date: { gte: week[0], lte: week[6] } },
     }),
     prisma.shift.findMany({
       where: { employeeId: me.id, date: { gte: monthStart, lte: monthEnd } },
@@ -49,7 +47,6 @@ export default async function StaffHome() {
   const nextShift = upcoming[0];
   const firstName = me.name.split(" ")[0];
 
-  // Group upcoming by day
   const groups: { iso: string; date: Date; shifts: Shift[] }[] = [];
   for (const s of upcoming) {
     const iso = toISODate(s.date);
@@ -63,11 +60,10 @@ export default async function StaffHome() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Hi {firstName} 👋</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Here&apos;s your schedule for {formatMonth(today)}.
+          Your schedule for {formatMonth(today)}.
         </p>
       </div>
 
-      {/* Next shift */}
       {nextShift && (
         <div className="card overflow-hidden p-0">
           <div className="bg-forest-500/10 px-4 py-3">
@@ -93,37 +89,47 @@ export default async function StaffHome() {
         </div>
       )}
 
-      {/* This week */}
       <div className="grid grid-cols-3 gap-3">
         <StatCard label="This week" value={`${weekHours.toFixed(1)}h`} icon="clock" />
-        <StatCard
-          label="Est. pay"
-          value={money(weekHours * me.hourlyRate)}
-          icon="cash"
-          accent="#34d399"
-        />
         <StatCard
           label="This month"
           value={`${monthHours.toFixed(1)}h`}
           icon="calendar"
+          accent="#34d399"
+        />
+        <StatCard
+          label="Upcoming"
+          value={upcoming.length}
+          sub="shifts"
+          icon="trend"
           accent="#22d3ee"
         />
       </div>
 
-      {me.hourlyRate > 0 && (
-        <p className="-mt-2 text-center text-xs text-ink-faint">
-          Estimated pay is based on your {money(me.hourlyRate)}/hr rate.
-        </p>
-      )}
+      {/* Availability shortcut */}
+      <Link
+        href="/staff/availability"
+        className="card flex items-center gap-3 p-4 transition hover:bg-elevated/40"
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-forest-500/15 text-forest-300">
+          <Icon name="star" className="h-5 w-5" />
+        </span>
+        <div className="flex-1">
+          <p className="font-semibold text-ink">Set your availability</p>
+          <p className="text-sm text-ink-muted">
+            Tell your manager when you can work each week.
+          </p>
+        </div>
+        <Icon name="chevronRight" className="h-5 w-5 text-ink-faint" />
+      </Link>
 
-      {/* Upcoming list */}
       <div>
         <SectionTitle>Upcoming shifts</SectionTitle>
         {groups.length === 0 ? (
           <EmptyState
             icon="calendar"
             title="No upcoming shifts"
-            hint="When your manager schedules you, your shifts will show up here."
+            hint="When your manager schedules you, your shifts show up here."
           />
         ) : (
           <div className="space-y-4">
@@ -137,7 +143,11 @@ export default async function StaffHome() {
                 </p>
                 <ul className="space-y-2">
                   {g.shifts.map((s) => (
-                    <Card as="li" key={s.id} className="flex items-center justify-between gap-3">
+                    <Card
+                      as="li"
+                      key={s.id}
+                      className="flex items-center justify-between gap-3"
+                    >
                       <div>
                         <p className="font-medium text-ink">
                           {s.start}–{s.end}
@@ -145,8 +155,6 @@ export default async function StaffHome() {
                         <p className="text-xs text-ink-muted">
                           {s.role ?? me.position ?? "Shift"} ·{" "}
                           {shiftHours(s.start, s.end)}h
-                          {me.hourlyRate > 0 &&
-                            ` · ${money(shiftHours(s.start, s.end) * me.hourlyRate)}`}
                         </p>
                       </div>
                       <Icon name="clock" className="h-5 w-5 text-forest-300" />

@@ -185,6 +185,34 @@ async function main() {
     }
   }
 
+  // --- Daily checklist tasks (only if none exist) ---
+  if ((await prisma.task.count()) === 0) {
+    await prisma.task.createMany({
+      data: [
+        { title: "Clean beer keg", area: "Bar", sortOrder: 1 },
+        { title: "Check fridge temperatures", area: "Kitchen", sortOrder: 2 },
+        { title: "Empty bins", area: "Kitchen", sortOrder: 3 },
+        { title: "Wipe down tables", area: "Front of house", sortOrder: 4 },
+        { title: "Restock napkins & cutlery", area: "Front of house", sortOrder: 5 },
+        { title: "Mop kitchen floor", area: "Kitchen", sortOrder: 6 },
+      ],
+    });
+  }
+
+  // --- Menu items (only if none exist) ---
+  if ((await prisma.menuItem.count()) === 0) {
+    await prisma.menuItem.createMany({
+      data: [
+        { name: "Margherita Pizza", category: "Mains", price: 9.5, sortOrder: 1 },
+        { name: "Chicken Kebab", category: "Mains", price: 8.5, sortOrder: 2 },
+        { name: "Beef Burger", category: "Mains", price: 10, sortOrder: 3 },
+        { name: "Halloumi Fries", category: "Sides", price: 5, sortOrder: 4 },
+        { name: "Chips", category: "Sides", price: 3.5, sortOrder: 5 },
+        { name: "Coca-Cola", category: "Drinks", price: 2, sortOrder: 6 },
+      ],
+    });
+  }
+
   console.log("✓ Seed complete.");
   console.log("  Admin login:  username 'Admin'  /  admin123");
   console.log("  Staff login:  username 'maria'  /  staff1234");

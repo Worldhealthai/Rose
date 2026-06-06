@@ -54,6 +54,42 @@ export function RefreshForm({
   );
 }
 
+/** A standalone button that runs a server action with fixed fields, then refreshes. */
+export function RefreshButton({
+  action,
+  fields,
+  children,
+  className = "btn-secondary",
+  pendingLabel = "…",
+}: {
+  action: (formData: FormData) => Promise<unknown> | unknown;
+  fields: Record<string, string>;
+  children: React.ReactNode;
+  className?: string;
+  pendingLabel?: React.ReactNode;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      aria-busy={pending}
+      className={className}
+      onClick={() => {
+        const fd = new FormData();
+        Object.entries(fields).forEach(([k, v]) => fd.set(k, v));
+        startTransition(async () => {
+          await action(fd);
+          router.refresh();
+        });
+      }}
+    >
+      {pending ? pendingLabel : children}
+    </button>
+  );
+}
+
 export function SubmitButton({
   children,
   className = "btn-primary",

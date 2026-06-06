@@ -51,18 +51,21 @@ model Shift {
   @@index([employeeId])
 }
 
-/// A staff member's weekly availability / preferences (one row per weekday).
+/// A staff member's availability / preferences for a specific week.
+/// weekStart is the Monday (UTC midnight) of the week the preference applies to.
 model Availability {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   employeeId     String
-  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee       Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  weekStart      DateTime? // Monday of the week these preferences are for
   dayOfWeek      Int // 0 = Monday ... 6 = Sunday
-  available      Boolean  @default(true)
+  available      Boolean   @default(true)
   preferredStart String? // "HH:mm"
   preferredEnd   String? // "HH:mm"
   note           String?
 
-  @@unique([employeeId, dayOfWeek])
+  @@index([weekStart])
+  @@index([employeeId, weekStart])
 }
 
 /// One row per trading day. Income split by channel.
@@ -118,4 +121,46 @@ model Product {
 model Setting {
   key   String @id
   value String
+}
+
+/// A recurring daily checklist task (e.g. "Clean beer keg").
+model Task {
+  id          String           @id @default(cuid())
+  title       String
+  area        String? // optional grouping: Kitchen, Bar, Front of house
+  active      Boolean          @default(true)
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  completions TaskCompletion[]
+}
+
+/// Marks a task done on a particular day (the checklist resets each day).
+model TaskCompletion {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  date       DateTime // the day (UTC midnight) it was completed for
+  doneById   String?
+  doneByName String?
+  createdAt  DateTime @default(now())
+
+  @@unique([taskId, date])
+  @@index([date])
+}
+
+/// A menu item. When unavailable ("86'd"), staff are reminded to order the
+/// ingredients and remove it from the delivery apps.
+model MenuItem {
+  id              String   @id @default(cuid())
+  name            String
+  category        String?
+  price           Float?
+  available       Boolean  @default(true)
+  unavailableNote String? // what's needed to bring it back
+  offJustEat      Boolean  @default(false)
+  offUberEats     Boolean  @default(false)
+  offDeliveroo    Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
