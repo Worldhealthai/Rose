@@ -199,20 +199,6 @@ async function main() {
     });
   }
 
-  // --- Menu items (only if none exist) ---
-  if ((await prisma.menuItem.count()) === 0) {
-    await prisma.menuItem.createMany({
-      data: [
-        { name: "Margherita Pizza", category: "Mains", price: 9.5, sortOrder: 1 },
-        { name: "Chicken Kebab", category: "Mains", price: 8.5, sortOrder: 2 },
-        { name: "Beef Burger", category: "Mains", price: 10, sortOrder: 3 },
-        { name: "Halloumi Fries", category: "Sides", price: 5, sortOrder: 4 },
-        { name: "Chips", category: "Sides", price: 3.5, sortOrder: 5 },
-        { name: "Coca-Cola", category: "Drinks", price: 2, sortOrder: 6 },
-      ],
-    });
-  }
-
   console.log("✓ Seed complete.");
   console.log("  Admin login:  username 'Admin'  /  admin123");
   console.log("  Staff login:  username 'maria'  /  staff1234");

@@ -15,7 +15,6 @@ export default async function StaffLayout({
   const NAV: NavItem[] = [
     { href: "/staff", label: t.nav.shifts, icon: "calendar", exact: true },
     { href: "/staff/checklist", label: t.nav.tasks, icon: "clipboard" },
-    { href: "/staff/menu", label: t.nav.menu, icon: "book" },
     { href: "/staff/orders", label: t.nav.orders, icon: "cart" },
     { href: "/staff/profile", label: t.nav.you, icon: "user" },
   ];

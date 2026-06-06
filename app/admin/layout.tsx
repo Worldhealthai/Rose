@@ -25,7 +25,6 @@ export default async function AdminLayout({
     { href: "/admin/orders", label: "Order list", icon: "cart" },
     { href: "/admin/checklist", label: "Checklist", icon: "clipboard" },
     { href: "/admin/temps", label: "Temp log", icon: "thermometer" },
-    { href: "/admin/menu", label: "Menu", icon: "book" },
     { href: "/admin/settings", label: "Settings", icon: "settings" },
   ];
 

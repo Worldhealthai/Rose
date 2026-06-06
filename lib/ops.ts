@@ -35,14 +35,3 @@ export async function getChecklistToday(
     assigneeName: t.assignee?.name ?? null,
   }));
 }
-
-export function getMenuItems() {
-  return prisma.menuItem.findMany({
-    orderBy: [
-      { available: "asc" }, // unavailable first
-      { category: "asc" },
-      { sortOrder: "asc" },
-      { name: "asc" },
-    ],
-  });
-}
