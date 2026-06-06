@@ -63,6 +63,32 @@ export default async function AdminDashboard() {
         />
       </div>
 
+      {/* Profit this month */}
+      <div>
+        <SectionTitle>Profit · {formatMonth(d.monthLabel)}</SectionTitle>
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard
+            label="Net income"
+            value={money(d.monthNet)}
+            sub="after delivery fees"
+            icon="cash"
+            accent="#34d399"
+          />
+          <StatCard
+            label="Expenses"
+            value={money(d.monthExpenses)}
+            icon="cart"
+            accent="#f0635a"
+          />
+          <StatCard
+            label="Profit"
+            value={money(d.monthProfit)}
+            icon="trend"
+            accent={d.monthProfit >= 0 ? "#37c97e" : "#f0635a"}
+          />
+        </div>
+      </div>
+
       {/* Trend + channel mix */}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

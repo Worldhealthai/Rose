@@ -27,7 +27,11 @@ export type IconName =
   | "alert"
   | "menu"
   | "clipboard"
-  | "book";
+  | "book"
+  | "receipt"
+  | "wallet"
+  | "sun"
+  | "thermometer";
 
 const PATHS: Record<IconName, JSX.Element> = {
   dashboard: (
@@ -159,6 +163,27 @@ const PATHS: Record<IconName, JSX.Element> = {
       <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H12v15H5.5A1.5 1.5 0 0 0 4 20.5z" />
       <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H12v15h6.5a1.5 1.5 0 0 1 1.5 1.5z" />
     </>
+  ),
+  receipt: (
+    <>
+      <path d="M5 3v18l2-1.2 2 1.2 2-1.2 2 1.2 2-1.2 2 1.2V3l-2 1.2-2-1.2-2 1.2-2-1.2-2 1.2z" />
+      <path d="M8.5 8.5h7M8.5 12h7" />
+    </>
+  ),
+  wallet: (
+    <>
+      <rect x="3" y="6" width="18" height="13" rx="2" />
+      <path d="M3 10h18M16.5 14h1.5" />
+    </>
+  ),
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" />
+    </>
+  ),
+  thermometer: (
+    <path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z" />
   ),
 };
 

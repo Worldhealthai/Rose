@@ -46,3 +46,16 @@ export function pct(part: number, whole: number): number {
   if (whole <= 0) return 0;
   return Math.round((part / whole) * 1000) / 10;
 }
+
+/** Net income after deducting delivery commission (rates are fractions 0–1). */
+export function netIncome(
+  i: IncomeLike,
+  rates: { justEat: number; uberEats: number; deliveroo: number },
+): number {
+  return (
+    i.zReport +
+    i.justEat * (1 - rates.justEat) +
+    i.uberEats * (1 - rates.uberEats) +
+    i.deliveroo * (1 - rates.deliveroo)
+  );
+}

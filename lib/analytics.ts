@@ -9,7 +9,8 @@ import {
   toISODate,
   weekDays,
 } from "./dates";
-import { incomeTotal, shiftHours, sumIncome, pct } from "./calc";
+import { incomeTotal, shiftHours, sumIncome, pct, netIncome } from "./calc";
+import { getCommissionRates } from "./settings";
 
 const ZERO = { zReport: 0, justEat: 0, uberEats: 0, deliveroo: 0 };
 
@@ -34,6 +35,8 @@ export async function getDashboardData() {
     menuOff,
     tasksActive,
     tasksDoneToday,
+    rates,
+    expenseAgg,
   ] = await Promise.all([
     prisma.dailyIncome.findMany({
       where: { date: { gte: fetchStart, lte: today } },
@@ -50,6 +53,11 @@ export async function getDashboardData() {
     prisma.menuItem.count({ where: { available: false } }),
     prisma.task.count({ where: { active: true } }),
     prisma.taskCompletion.count({ where: { date: today } }),
+    getCommissionRates(),
+    prisma.expense.aggregate({
+      _sum: { amount: true },
+      where: { date: { gte: monthStart, lte: monthEnd } },
+    }),
   ]);
 
   const byDay = new Map(incomes.map((i) => [toISODate(i.date), i]));
@@ -64,6 +72,9 @@ export async function getDashboardData() {
   const todayTotal = incomeTotal(todayIncome);
   const weekSum = sumIncome(weekRows);
   const monthSum = sumIncome(monthRows);
+  const monthNet = monthRows.reduce((s, r) => s + netIncome(r, rates), 0);
+  const monthExpenses = expenseAgg._sum.amount ?? 0;
+  const monthProfit = monthNet - monthExpenses;
 
   // 30-day trend
   const trend = Array.from({ length: 30 }, (_, i) => {
@@ -100,6 +111,9 @@ export async function getDashboardData() {
     todayTotal,
     weekSum,
     monthSum,
+    monthNet,
+    monthExpenses,
+    monthProfit,
     monthLabel: monthStart,
     trend,
     weekHours,

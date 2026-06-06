@@ -33,6 +33,7 @@ model Employee {
   shifts        Shift[]
   availability  Availability[]
   assignedTasks Task[]         @relation("AssignedTasks")
+  timeOff       TimeOff[]      @relation("TimeOff")
 }
 
 /// A scheduled shift. employeeId null = open/unassigned slot.
@@ -98,6 +99,7 @@ model Supplier {
   updatedAt   DateTime  @updatedAt
 
   products    Product[]
+  expenses    Expense[]
 }
 
 /// A product/ingredient. Linked to a supplier. `needed` = on the order list.
@@ -118,10 +120,52 @@ model Product {
   @@index([needed])
 }
 
-/// Simple key/value app settings (restaurant name, etc.).
+/// Simple key/value app settings (restaurant name, delivery commission %, …).
 model Setting {
   key   String @id
   value String
+}
+
+/// A business cost (stock, wages, rent, bills…). Used for profit = income − expenses.
+model Expense {
+  id         String    @id @default(cuid())
+  date       DateTime
+  category   String // Stock, Wages, Rent, Bills, Other
+  amount     Float     @default(0)
+  note       String?
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+
+  @@index([date])
+}
+
+/// A staff holiday / time-off request.
+model TimeOff {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation("TimeOff", fields: [employeeId], references: [id], onDelete: Cascade)
+  startDate  DateTime
+  endDate    DateTime
+  note       String?
+  status     String   @default("PENDING") // PENDING / APPROVED / DECLINED
+  createdAt  DateTime @default(now())
+
+  @@index([employeeId])
+  @@index([startDate])
+}
+
+/// A food-safety temperature reading (fridges/freezers) for compliance logs.
+model TempLog {
+  id        String   @id @default(cuid())
+  date      DateTime
+  unit      String // e.g. "Walk-in fridge", "Freezer 1"
+  temp      Float
+  byId      String?
+  byName    String?
+  createdAt DateTime @default(now())
+
+  @@index([date])
 }
 
 /// A recurring daily checklist task (e.g. "Clean beer keg").

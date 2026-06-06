@@ -6,6 +6,7 @@ const NAV: NavItem[] = [
   { href: "/admin/rota", label: "Rota", icon: "calendar" },
   { href: "/admin/employees", label: "Team", icon: "users" },
   { href: "/admin/income", label: "Income", icon: "cash" },
+  { href: "/admin/expenses", label: "Expenses", icon: "receipt" },
   { href: "/admin/suppliers", label: "Suppliers", icon: "truck" },
   { href: "/admin/orders", label: "Order list", icon: "cart" },
   { href: "/admin/checklist", label: "Checklist", icon: "clipboard" },

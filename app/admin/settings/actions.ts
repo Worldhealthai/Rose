@@ -9,6 +9,7 @@ import {
   hashPassword,
   verifyPassword,
 } from "@/lib/auth";
+import { COMMISSION_KEYS } from "@/lib/settings";
 
 const BASE = "/admin/settings";
 
@@ -26,6 +27,26 @@ export async function updateRestaurantName(formData: FormData) {
   });
   revalidatePath(BASE);
   redirect(`${BASE}?ok=${encodeURIComponent("Settings saved.")}`);
+}
+
+export async function updateCommission(formData: FormData) {
+  await requireAdmin();
+  const save = async (key: string, raw: FormDataEntryValue | null) => {
+    const n = parseFloat(String(raw ?? "").trim());
+    const value = isFinite(n) && n >= 0 && n <= 100 ? String(n) : "0";
+    await prisma.setting.upsert({
+      where: { key },
+      create: { key, value },
+      update: { value },
+    });
+  };
+  await save(COMMISSION_KEYS.justEat, formData.get("justEat"));
+  await save(COMMISSION_KEYS.uberEats, formData.get("uberEats"));
+  await save(COMMISSION_KEYS.deliveroo, formData.get("deliveroo"));
+  revalidatePath(BASE);
+  revalidatePath("/admin");
+  revalidatePath("/admin/income");
+  redirect(`${BASE}?ok=${encodeURIComponent("Commission saved.")}`);
 }
 
 export async function changeMyPassword(formData: FormData) {

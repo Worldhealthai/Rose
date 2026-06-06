@@ -1,8 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getCommissionRates } from "@/lib/settings";
+import { CURRENCY_SYMBOL } from "@/lib/money";
 import { PageHeader, Card, SectionTitle } from "@/components/ui";
 import { Flash } from "@/components/Flash";
-import { updateRestaurantName, changeMyPassword } from "./actions";
+import {
+  updateRestaurantName,
+  updateCommission,
+  changeMyPassword,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +17,10 @@ export default async function SettingsPage({
 }: {
   searchParams: { ok?: string; error?: string };
 }) {
-  const [me, nameSetting] = await Promise.all([
+  const [me, nameSetting, rates] = await Promise.all([
     getCurrentUser(),
     prisma.setting.findUnique({ where: { key: "restaurantName" } }),
+    getCommissionRates(),
   ]);
 
   return (
@@ -34,6 +41,33 @@ export default async function SettingsPage({
           </div>
           <button className="btn-primary">Save</button>
         </form>
+      </Card>
+
+      <Card>
+        <SectionTitle>Delivery commission</SectionTitle>
+        <p className="mb-3 text-sm text-ink-muted">
+          The % each app keeps. Used to show your net income and profit.
+        </p>
+        <form action={updateCommission} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3 sm:max-w-md">
+            <div>
+              <label className="label">Just Eat (%)</label>
+              <input name="justEat" type="number" step="0.5" min="0" max="100" defaultValue={Math.round(rates.justEat * 100) || ""} className="input" placeholder="0" />
+            </div>
+            <div>
+              <label className="label">Uber Eats (%)</label>
+              <input name="uberEats" type="number" step="0.5" min="0" max="100" defaultValue={Math.round(rates.uberEats * 100) || ""} className="input" placeholder="0" />
+            </div>
+            <div>
+              <label className="label">Deliveroo (%)</label>
+              <input name="deliveroo" type="number" step="0.5" min="0" max="100" defaultValue={Math.round(rates.deliveroo * 100) || ""} className="input" placeholder="0" />
+            </div>
+          </div>
+          <button className="btn-primary">Save commission</button>
+        </form>
+        <p className="mt-2 text-xs text-ink-faint">
+          Z report ({CURRENCY_SYMBOL} in-house) has no commission.
+        </p>
       </Card>
 
       <Card>

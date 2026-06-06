@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { money, CURRENCY_SYMBOL } from "@/lib/money";
-import { CHANNELS, incomeTotal, sumIncome, pct } from "@/lib/calc";
+import { CHANNELS, incomeTotal, sumIncome, pct, netIncome } from "@/lib/calc";
+import { getCommissionRates } from "@/lib/settings";
 import {
   today as todayFn,
   parseDay,
@@ -107,15 +108,17 @@ export default async function IncomePage({
       ? anchor
       : today;
 
-  const [editingRow, rows] = await Promise.all([
+  const [editingRow, rows, rates] = await Promise.all([
     prisma.dailyIncome.findUnique({ where: { date: selectedDate } }),
     prisma.dailyIncome.findMany({
       where: { date: { gte: periodStart, lte: periodEnd } },
       orderBy: { date: "desc" },
     }),
+    getCommissionRates(),
   ]);
 
   const summary = sumIncome(rows);
+  const net = netIncome(summary, rates);
   const avg = rows.length ? summary.total / rows.length : 0;
   const best =
     rows.length > 0
@@ -320,6 +323,10 @@ export default async function IncomePage({
             </div>
           ))}
         </div>
+        <p className="mt-4 border-t border-border-soft pt-3 text-sm text-ink-muted">
+          Net after delivery fees:{" "}
+          <span className="font-semibold text-forest-200">{money(net)}</span>
+        </p>
       </Card>
 
       {/* Day list */}
