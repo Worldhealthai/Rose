@@ -16,10 +16,9 @@ import {
   formatLongDay,
   formatShort,
   relativeDay,
-  WEEKDAYS_SHORT,
 } from "@/lib/dates";
 import { PageHeader, Card, StatCard, SectionTitle, Dot } from "@/components/ui";
-import { BarTrend, StackedBar } from "@/components/charts";
+import { StackedBar } from "@/components/charts";
 import { Icon } from "@/components/icons";
 import { RefreshForm, SubmitButton } from "@/components/forms";
 import { upsertIncome, deleteIncome } from "./actions";
@@ -126,19 +125,6 @@ export default async function IncomePage({
     summary.justEat + summary.uberEats + summary.deliveroo,
     summary.total,
   );
-
-  // Trend bars (week = 7 days, month = each day; none for a single day).
-  const byDay = new Map(rows.map((r) => [toISODate(r.date), r]));
-  const trendLen =
-    view === "week" ? 7 : view === "month" ? periodEnd.getUTCDate() : 0;
-  const trend = Array.from({ length: trendLen }, (_, i) => {
-    const d = addDays(periodStart, i);
-    const r = byDay.get(toISODate(d));
-    return {
-      label: view === "week" ? WEEKDAYS_SHORT[i] : String(i + 1),
-      value: r ? incomeTotal(r) : 0,
-    };
-  });
 
   const editingDateISO = toISODate(selectedDate);
   const base = "/admin/income";
@@ -335,14 +321,6 @@ export default async function IncomePage({
           ))}
         </div>
       </Card>
-
-      {/* Trend */}
-      {trendLen > 0 && rows.length > 0 && (
-        <Card>
-          <SectionTitle>Daily takings</SectionTitle>
-          <BarTrend data={trend} formatValue={(v) => money(v)} />
-        </Card>
-      )}
 
       {/* Day list */}
       <div>
