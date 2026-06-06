@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { money } from "@/lib/money";
+import { money, CURRENCY_SYMBOL } from "@/lib/money";
 import { shiftHours } from "@/lib/calc";
 import {
   today as todayFn,
@@ -13,19 +13,25 @@ import {
   toISODate,
   formatMonth,
   formatShort,
+  formatDay,
 } from "@/lib/dates";
 import { PageHeader, Card, StatCard, SectionTitle } from "@/components/ui";
+import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
+import { Avatar } from "@/components/Avatar";
+import { logWagePayment, deleteWagePayment } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function PayrollPage({
   searchParams,
 }: {
-  searchParams: { view?: string; anchor?: string };
+  searchParams: { view?: string; anchor?: string; ok?: string; error?: string };
 }) {
   const view = searchParams.view === "month" ? "month" : "week";
   const anchor = parseDay(searchParams.anchor);
+  const today = todayFn();
+  const monthStart = startOfMonth(today);
 
   let start: Date, end: Date, prev: Date, next: Date, label: string;
   if (view === "month") {
@@ -42,36 +48,50 @@ export default async function PayrollPage({
     label = `${formatShort(start)} – ${formatShort(end)}`;
   }
 
-  const shifts = await prisma.shift.findMany({
-    where: { date: { gte: start, lte: end }, employeeId: { not: null } },
-    include: { employee: true },
-  });
+  const [employees, shifts, payments] = await Promise.all([
+    prisma.employee.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.shift.findMany({
+      where: { date: { gte: start, lte: end }, employeeId: { not: null } },
+    }),
+    prisma.expense.findMany({
+      where: {
+        category: "Wages",
+        employeeId: { not: null },
+        date: { gte: addDays(today, -120) },
+      },
+      orderBy: { date: "desc" },
+    }),
+  ]);
 
-  type Row = { id: string; name: string; position: string | null; rate: number; hours: number };
-  const map = new Map<string, Row>();
+  const hoursByEmp = new Map<string, number>();
   for (const s of shifts) {
-    if (!s.employee) continue;
-    const r =
-      map.get(s.employee.id) ??
-      ({
-        id: s.employee.id,
-        name: s.employee.name,
-        position: s.employee.position,
-        rate: s.employee.hourlyRate,
-        hours: 0,
-      } satisfies Row);
-    r.hours += shiftHours(s.start, s.end);
-    map.set(s.employee.id, r);
+    if (!s.employeeId) continue;
+    hoursByEmp.set(s.employeeId, (hoursByEmp.get(s.employeeId) ?? 0) + shiftHours(s.start, s.end));
   }
-  const rows = [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
-  const totalHours = rows.reduce((h, r) => h + r.hours, 0);
-  const totalPay = rows.reduce((p, r) => p + r.hours * r.rate, 0);
+  const payByEmp = new Map<string, typeof payments>();
+  for (const p of payments) {
+    if (!p.employeeId) continue;
+    (payByEmp.get(p.employeeId) ?? payByEmp.set(p.employeeId, []).get(p.employeeId)!).push(p);
+  }
+
+  const estTotal = employees.reduce(
+    (s, e) => s + (hoursByEmp.get(e.id) ?? 0) * e.hourlyRate,
+    0,
+  );
+  const totalHours = [...hoursByEmp.values()].reduce((a, b) => a + b, 0);
+  const paidThisMonthTotal = payments
+    .filter((p) => p.date >= monthStart)
+    .reduce((a, b) => a + b.amount, 0);
 
   const periodHref = (a: Date) => `/admin/payroll?view=${view}&anchor=${toISODate(a)}`;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Payroll" subtitle="Staff hours & estimated pay" />
+      <PageHeader title="Payroll" subtitle="Hours, estimated pay & wage payments" />
+      <Flash ok={searchParams.ok} error={searchParams.error} />
 
       {/* View toggle */}
       <div className="flex justify-center">
@@ -108,37 +128,96 @@ export default async function PayrollPage({
 
       {/* Totals */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Wage bill" value={money(totalPay)} icon="wallet" />
-        <StatCard label="Total hours" value={totalHours.toFixed(1)} icon="clock" accent="#34d399" />
-        <StatCard label="Staff" value={rows.length} icon="users" accent="#22d3ee" />
+        <StatCard label="Est. wage bill" value={money(estTotal)} sub={label} icon="wallet" />
+        <StatCard label="Hours" value={totalHours.toFixed(1)} icon="clock" accent="#34d399" />
+        <StatCard label="Paid this month" value={money(paidThisMonthTotal)} icon="cash" accent="#22d3ee" />
       </div>
 
-      {/* Per-employee */}
+      {/* Salary cards */}
       <div>
-        <SectionTitle>By employee</SectionTitle>
-        {rows.length === 0 ? (
+        <SectionTitle>Staff</SectionTitle>
+        {employees.length === 0 ? (
           <Card>
-            <p className="py-6 text-center text-sm text-ink-muted">
-              No shifts scheduled for {label}.
-            </p>
+            <p className="py-6 text-center text-sm text-ink-muted">No team members yet.</p>
           </Card>
         ) : (
-          <ul className="space-y-2">
-            {rows.map((r) => (
-              <Card as="li" key={r.id} className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate font-semibold text-ink">{r.name}</p>
-                  <p className="text-xs text-ink-faint">
-                    {r.position ?? "Team"} · {r.hours.toFixed(1)}h × {money(r.rate)}
-                  </p>
-                </div>
-                <span className="text-lg font-bold text-ink">{money(r.hours * r.rate)}</span>
-              </Card>
-            ))}
+          <ul className="space-y-3">
+            {employees.map((e) => {
+              const hours = hoursByEmp.get(e.id) ?? 0;
+              const estimate = hours * e.hourlyRate;
+              const history = payByEmp.get(e.id) ?? [];
+              const paidThisMonth = history
+                .filter((p) => p.date >= monthStart)
+                .reduce((a, b) => a + b.amount, 0);
+              return (
+                <Card as="li" key={e.id}>
+                  <div className="flex items-center gap-3">
+                    <Avatar name={e.name} src={e.avatar} size={40} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-ink">{e.name}</p>
+                      <p className="text-xs text-ink-faint">
+                        {e.position ?? "Team"} · {money(e.hourlyRate)}/hr
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-ink">{money(estimate)}</p>
+                      <p className="text-[11px] text-ink-faint">{hours.toFixed(1)}h this {view}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between rounded-xl bg-canvas/40 px-3 py-2 text-sm">
+                    <span className="text-ink-muted">Paid this month</span>
+                    <span className="font-semibold text-forest-200">{money(paidThisMonth)}</span>
+                  </div>
+
+                  {/* Log a payment */}
+                  <form action={logWagePayment} className="mt-3 flex flex-wrap items-end gap-2">
+                    <input type="hidden" name="employeeId" value={e.id} />
+                    <div className="w-28">
+                      <label className="label">Pay ({CURRENCY_SYMBOL})</label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint">{CURRENCY_SYMBOL}</span>
+                        <input name="amount" type="number" step="0.01" min="0" defaultValue={estimate > 0 ? estimate.toFixed(2) : ""} className="input pl-7 !py-2" placeholder="0.00" />
+                      </div>
+                    </div>
+                    <input name="note" className="input !py-2 min-w-[8rem] flex-1" placeholder="Note (e.g. week ending…)" />
+                    <button className="btn-primary !py-2">Log payment</button>
+                  </form>
+
+                  {/* History */}
+                  {history.length > 0 && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer list-none text-xs font-medium text-forest-300">
+                        Payment history ({history.length})
+                      </summary>
+                      <ul className="mt-2 divide-y divide-border-soft">
+                        {history.map((p) => (
+                          <li key={p.id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                            <span className="min-w-0">
+                              <span className="font-medium text-ink">{money(p.amount)}</span>
+                              <span className="ml-2 text-xs text-ink-faint">
+                                {formatDay(p.date)}
+                                {p.note ? ` · ${p.note}` : ""}
+                              </span>
+                            </span>
+                            <form action={deleteWagePayment}>
+                              <input type="hidden" name="id" value={p.id} />
+                              <button className="grid h-8 w-8 place-items-center rounded-lg text-ink-faint hover:bg-danger/10 hover:text-danger" aria-label="Delete payment">
+                                <Icon name="trash" className="h-4 w-4" />
+                              </button>
+                            </form>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </Card>
+              );
+            })}
           </ul>
         )}
         <p className="mt-3 text-center text-xs text-ink-faint">
-          Estimated from scheduled shifts × hourly rate.
+          Logged payments are added to Expenses (Wages) and count towards profit.
         </p>
       </div>
     </div>

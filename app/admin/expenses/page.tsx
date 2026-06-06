@@ -35,7 +35,10 @@ export default async function ExpensesPage({
     prisma.expense.findMany({
       where: { date: { gte: monthStart, lte: monthEnd } },
       orderBy: { date: "desc" },
-      include: { supplier: { select: { name: true } } },
+      include: {
+        supplier: { select: { name: true } },
+        employee: { select: { name: true } },
+      },
     }),
     prisma.supplier.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
@@ -131,6 +134,7 @@ export default async function ExpensesPage({
                   </p>
                   <p className="truncate text-xs text-ink-muted">
                     {formatDay(r.date)}
+                    {r.employee ? ` · ${r.employee.name}` : ""}
                     {r.supplier ? ` · ${r.supplier.name}` : ""}
                     {r.note ? ` · ${r.note}` : ""}
                   </p>

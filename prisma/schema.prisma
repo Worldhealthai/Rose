@@ -34,6 +34,7 @@ model Employee {
   availability  Availability[]
   assignedTasks Task[]         @relation("AssignedTasks")
   timeOff       TimeOff[]      @relation("TimeOff")
+  expenses      Expense[]
 }
 
 /// A scheduled shift. employeeId null = open/unassigned slot.
@@ -135,9 +136,12 @@ model Expense {
   note       String?
   supplierId String?
   supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  employeeId String? // set for wage payments
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   createdAt  DateTime  @default(now())
 
   @@index([date])
+  @@index([employeeId])
 }
 
 /// A staff holiday / time-off request.
