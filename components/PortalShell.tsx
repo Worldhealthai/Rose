@@ -7,6 +7,7 @@ import { Icon, type IconName } from "./icons";
 import { Avatar } from "./Avatar";
 import { Logo } from "./Logo";
 import { LanguageToggle } from "./LanguageToggle";
+import { AccountMenu } from "./AccountMenu";
 import type { Locale } from "@/lib/i18n";
 import { signOut } from "@/app/login/actions";
 
@@ -64,6 +65,7 @@ export function PortalShell({
   mobileNav = "drawer",
   dir = "ltr",
   localeToggle,
+  account,
   children,
 }: {
   user: { name: string; role: string; avatar?: string | null };
@@ -72,6 +74,7 @@ export function PortalShell({
   mobileNav?: "tabs" | "drawer";
   dir?: "ltr" | "rtl";
   localeToggle?: Locale;
+  account?: { links: { href: string; label: string }[]; signOutLabel: string };
   children: React.ReactNode;
 }) {
   const isActive = useIsActive();
@@ -127,20 +130,23 @@ export function PortalShell({
       {/* Mobile top bar */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border-soft bg-canvas/85 px-4 py-3 backdrop-blur md:hidden">
         <Brand subtitle={subtitle} />
-        <div className="flex items-center gap-2">
-          {localeToggle && <LanguageToggle current={localeToggle} />}
-          {mobileNav === "drawer" ? (
-            <button
-              onClick={() => setOpen(true)}
-              className="grid h-10 w-10 place-items-center rounded-xl border border-border text-ink"
-              aria-label="Open menu"
-            >
-              <Icon name="menu" className="h-5 w-5" />
-            </button>
-          ) : (
-            <Avatar name={user.name} src={user.avatar} size={36} />
-          )}
-        </div>
+        {mobileNav === "drawer" ? (
+          <button
+            onClick={() => setOpen(true)}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-border text-ink"
+            aria-label="Open menu"
+          >
+            <Icon name="menu" className="h-5 w-5" />
+          </button>
+        ) : (
+          <AccountMenu
+            name={user.name}
+            avatar={user.avatar}
+            locale={localeToggle}
+            links={account?.links ?? []}
+            signOutLabel={account?.signOutLabel ?? "Sign out"}
+          />
+        )}
       </header>
 
       {/* Mobile drawer */}

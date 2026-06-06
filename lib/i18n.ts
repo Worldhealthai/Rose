@@ -22,6 +22,8 @@ const en = {
     orders: "Orders",
     you: "You",
     staffPortal: "Staff portal",
+    availability: "Availability & time off",
+    account: "Account",
   },
   login: {
     subtitle: "Sign in to your portal",
@@ -174,6 +176,8 @@ const fa: Dict = {
     orders: "سفارش‌ها",
     you: "حساب",
     staffPortal: "پرتال کارکنان",
+    availability: "زمان‌های کاری و مرخصی",
+    account: "حساب کاربری",
   },
   login: {
     subtitle: "برای ورود به پرتال خود وارد شوید",

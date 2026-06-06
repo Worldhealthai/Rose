@@ -7,6 +7,7 @@ import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { signOut } from "@/app/login/actions";
 import { updateMyContact, updateMyAvatar, changeMyPassword } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -116,6 +117,13 @@ export default async function ProfilePage({
           <button className="btn-primary">{t.updatePassword}</button>
         </form>
       </Card>
+
+      <form action={signOut}>
+        <button className="btn-secondary w-full text-danger">
+          <Icon name="logout" className="h-4 w-4" />
+          {dict.common.signOut}
+        </button>
+      </form>
     </div>
   );
 }

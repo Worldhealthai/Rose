@@ -28,6 +28,13 @@ export default async function StaffLayout({
       mobileNav="tabs"
       dir={isRTL(locale) ? "rtl" : "ltr"}
       localeToggle={locale}
+      account={{
+        links: [
+          { href: "/staff/availability", label: t.nav.availability },
+          { href: "/staff/profile", label: t.profile.title },
+        ],
+        signOutLabel: t.common.signOut,
+      }}
     >
       {children}
     </PortalShell>
