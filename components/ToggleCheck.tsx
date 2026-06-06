@@ -1,14 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Icon } from "./icons";
 
-/** A tap-to-toggle checkbox row that runs a server action and refreshes. */
+/**
+ * A tap-to-toggle checkbox row. Updates instantly (optimistic) and saves in the
+ * background, so it never feels laggy on a slow connection.
+ */
 export function ToggleCheck({
   action,
   fields,
-  checked,
+  checked: checkedProp,
   title,
   subtitle,
   accent = "#37c97e",
@@ -23,25 +26,31 @@ export function ToggleCheck({
   strike?: boolean;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const [checked, setChecked] = useState(checkedProp);
+
+  // Re-sync with the server value once it catches up (or changes elsewhere).
+  useEffect(() => setChecked(checkedProp), [checkedProp]);
+
+  function onClick() {
+    setChecked((c) => !c); // instant visual feedback
+    const fd = new FormData();
+    Object.entries(fields).forEach(([k, v]) => fd.set(k, v));
+    startTransition(async () => {
+      await action(fd);
+      router.refresh();
+    });
+  }
 
   return (
     <button
       type="button"
-      disabled={pending}
-      onClick={() => {
-        const fd = new FormData();
-        Object.entries(fields).forEach(([k, v]) => fd.set(k, v));
-        startTransition(async () => {
-          await action(fd);
-          router.refresh();
-        });
-      }}
+      onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition active:scale-[0.99] ${
         checked
           ? "border-forest-500/40 bg-forest-500/10"
           : "border-border-soft bg-canvas/40 hover:border-forest-500/40"
-      } ${pending ? "opacity-60" : ""}`}
+      }`}
     >
       <span
         className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border ${

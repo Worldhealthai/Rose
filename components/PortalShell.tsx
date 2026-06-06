@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Icon, type IconName } from "./icons";
 import { Avatar } from "./Avatar";
 import { Logo } from "./Logo";
+import { LanguageToggle } from "./LanguageToggle";
+import type { Locale } from "@/lib/i18n";
 import { signOut } from "@/app/login/actions";
 
 export type NavItem = {
@@ -61,6 +63,7 @@ export function PortalShell({
   items,
   mobileNav = "drawer",
   dir = "ltr",
+  localeToggle,
   children,
 }: {
   user: { name: string; role: string; avatar?: string | null };
@@ -68,6 +71,7 @@ export function PortalShell({
   items: NavItem[];
   mobileNav?: "tabs" | "drawer";
   dir?: "ltr" | "rtl";
+  localeToggle?: Locale;
   children: React.ReactNode;
 }) {
   const isActive = useIsActive();
@@ -111,6 +115,11 @@ export function PortalShell({
               </p>
             </div>
           </div>
+          {localeToggle && (
+            <div className="mb-2 px-2">
+              <LanguageToggle current={localeToggle} />
+            </div>
+          )}
           <SignOut compact />
         </div>
       </aside>
@@ -118,17 +127,20 @@ export function PortalShell({
       {/* Mobile top bar */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border-soft bg-canvas/85 px-4 py-3 backdrop-blur md:hidden">
         <Brand subtitle={subtitle} />
-        {mobileNav === "drawer" ? (
-          <button
-            onClick={() => setOpen(true)}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-border text-ink"
-            aria-label="Open menu"
-          >
-            <Icon name="menu" className="h-5 w-5" />
-          </button>
-        ) : (
-          <Avatar name={user.name} src={user.avatar} size={36} />
-        )}
+        <div className="flex items-center gap-2">
+          {localeToggle && <LanguageToggle current={localeToggle} />}
+          {mobileNav === "drawer" ? (
+            <button
+              onClick={() => setOpen(true)}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-border text-ink"
+              aria-label="Open menu"
+            >
+              <Icon name="menu" className="h-5 w-5" />
+            </button>
+          ) : (
+            <Avatar name={user.name} src={user.avatar} size={36} />
+          )}
+        </div>
       </header>
 
       {/* Mobile drawer */}

@@ -27,6 +27,7 @@ export default async function StaffLayout({
       items={NAV}
       mobileNav="tabs"
       dir={isRTL(locale) ? "rtl" : "ltr"}
+      localeToggle={locale}
     >
       {children}
     </PortalShell>
