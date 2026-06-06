@@ -30,8 +30,9 @@ model Employee {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
-  shifts       Shift[]
-  availability Availability[]
+  shifts        Shift[]
+  availability  Availability[]
+  assignedTasks Task[]         @relation("AssignedTasks")
 }
 
 /// A scheduled shift. employeeId null = open/unassigned slot.
@@ -130,8 +131,12 @@ model Task {
   area        String? // optional grouping: Kitchen, Bar, Front of house
   active      Boolean          @default(true)
   sortOrder   Int              @default(0)
+  assigneeId  String? // null = everyone; otherwise a specific staff member
+  assignee    Employee?        @relation("AssignedTasks", fields: [assigneeId], references: [id], onDelete: SetNull)
   createdAt   DateTime         @default(now())
   completions TaskCompletion[]
+
+  @@index([assigneeId])
 }
 
 /// Marks a task done on a particular day (the checklist resets each day).

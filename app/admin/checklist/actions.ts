@@ -22,7 +22,11 @@ export async function createTask(formData: FormData) {
   const title = str(formData, "title");
   if (!title) redirect("/admin/checklist?error=Task+needs+a+title");
   await prisma.task.create({
-    data: { title, area: str(formData, "area") || null },
+    data: {
+      title,
+      area: str(formData, "area") || null,
+      assigneeId: str(formData, "assigneeId") || null,
+    },
   });
   refresh();
   redirect("/admin/checklist?ok=Task+added");
@@ -38,6 +42,7 @@ export async function updateTask(formData: FormData) {
       title: str(formData, "title"),
       area: str(formData, "area") || null,
       active: formData.get("active") === "on",
+      assigneeId: str(formData, "assigneeId") || null,
     },
   });
   refresh();
