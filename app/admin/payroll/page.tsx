@@ -19,6 +19,7 @@ import { PageHeader, Card, StatCard, SectionTitle } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { Avatar } from "@/components/Avatar";
+import { FormButton } from "@/components/FormButton";
 import { logWagePayment, deleteWagePayment } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -181,7 +182,7 @@ export default async function PayrollPage({
                       </div>
                     </div>
                     <input name="note" className="input !py-2 min-w-[8rem] flex-1" placeholder="Note (e.g. week ending…)" />
-                    <button className="btn-primary !py-2">Log payment</button>
+                    <FormButton className="btn-primary !py-2">Log payment</FormButton>
                   </form>
 
                   {/* History */}

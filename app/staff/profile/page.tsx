@@ -7,6 +7,7 @@ import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { FormButton } from "@/components/FormButton";
 import { signOut } from "@/app/login/actions";
 import { updateMyContact, updateMyAvatar, changeMyPassword } from "./actions";
 
@@ -86,7 +87,7 @@ export default async function ProfilePage({
               inputMode="tel"
             />
           </div>
-          <button className="btn-primary">{t.save}</button>
+          <FormButton className="btn-primary">{t.save}</FormButton>
         </form>
       </Card>
 
@@ -114,7 +115,7 @@ export default async function ProfilePage({
               required
             />
           </div>
-          <button className="btn-primary">{t.updatePassword}</button>
+          <FormButton className="btn-primary">{t.updatePassword}</FormButton>
         </form>
       </Card>
 

@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 import { QuantityInput } from "@/components/QuantityInput";
 import { ToggleCheck } from "@/components/ToggleCheck";
 import { Popover } from "@/components/Popover";
+import { FormButton } from "@/components/FormButton";
 import {
   createProduct,
   updateProduct,
@@ -231,7 +232,7 @@ export default async function OrdersPage({
             </label>
           </div>
           <div className="sm:col-span-2">
-            <button className="btn-primary">Add product</button>
+            <FormButton className="btn-primary">Add product</FormButton>
           </div>
         </form>
       </details>

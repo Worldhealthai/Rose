@@ -3,6 +3,7 @@ import { Icon } from "./icons";
 import { ToggleCheck } from "./ToggleCheck";
 import { Popover } from "./Popover";
 import { RefreshForm, RefreshButton, SubmitButton } from "./forms";
+import { FormButton } from "./FormButton";
 import { money } from "@/lib/money";
 import type { Dict } from "@/lib/i18n";
 import {
@@ -197,7 +198,7 @@ export function MenuView({
               <input name="price" type="number" step="0.01" min="0" className="input" placeholder="9.50" />
             </div>
             <div className="sm:col-span-3">
-              <button className="btn-primary">Add item</button>
+              <FormButton className="btn-primary">Add item</FormButton>
             </div>
           </form>
         </details>

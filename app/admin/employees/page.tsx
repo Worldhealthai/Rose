@@ -5,6 +5,7 @@ import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { Avatar } from "@/components/Avatar";
 import { AvatarUpload } from "@/components/AvatarUpload";
+import { FormButton } from "@/components/FormButton";
 import {
   createEmployee,
   updateEmployee,
@@ -246,7 +247,7 @@ export default async function EmployeesPage({
               placeholder="At least 6 characters"
             />
           </div>
-          <button className="btn-primary">Add team member</button>
+          <FormButton className="btn-primary">Add team member</FormButton>
         </form>
       </details>
 

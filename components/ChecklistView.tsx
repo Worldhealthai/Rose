@@ -1,5 +1,6 @@
 import { EmptyState } from "./ui";
 import { Icon } from "./icons";
+import { FormButton } from "./FormButton";
 import { ChecklistClient } from "./ChecklistClient";
 import type { Dict } from "@/lib/i18n";
 import { createTask, updateTask, deleteTask } from "@/app/admin/checklist/actions";
@@ -77,7 +78,7 @@ export function ChecklistView({
                   <AssigneeSelect employees={employees} />
                 </div>
               </div>
-              <button className="btn-primary">Add task</button>
+              <FormButton className="btn-primary">Add task</FormButton>
             </form>
 
             <ul className="divide-y divide-border-soft">

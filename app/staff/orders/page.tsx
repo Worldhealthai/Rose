@@ -7,6 +7,7 @@ import { PageHeader, Card, EmptyState } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { QuantityInput } from "@/components/QuantityInput";
 import { ToggleCheck } from "@/components/ToggleCheck";
+import { FormButton } from "@/components/FormButton";
 import {
   createProduct,
   setNeededNote,
@@ -99,7 +100,7 @@ export default async function StaffOrdersPage({
             </select>
           </div>
           <div className="sm:col-span-2">
-            <button className="btn-primary">{t.addToList}</button>
+            <FormButton className="btn-primary">{t.addToList}</FormButton>
           </div>
         </form>
       </details>

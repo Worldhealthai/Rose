@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/analytics";
 import { money, moneyCompact } from "@/lib/money";
-import { formatMonth, formatShort, relativeDay } from "@/lib/dates";
+import { formatMonth, relativeDay } from "@/lib/dates";
 import { CHANNELS } from "@/lib/calc";
 import { PageHeader, StatCard, Card, SectionTitle, Badge, Dot } from "@/components/ui";
-import { BarTrend, Donut } from "@/components/charts";
+import { Donut } from "@/components/charts";
 import { Icon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -89,61 +89,33 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Trend + channel mix */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <SectionTitle
-            action={
-              <span className="text-xs text-ink-faint">last 30 days</span>
-            }
-          >
-            Daily income
-          </SectionTitle>
-          {d.hasAnyIncome ? (
-            <BarTrend
-              data={d.trend.map((t) => ({
-                label: formatShort(t.date),
-                value: t.value,
-                highlight:
-                  t.date.getTime() === d.today.getTime(),
-              }))}
-              formatValue={(v) => money(v)}
-            />
-          ) : (
-            <p className="py-10 text-center text-sm text-ink-muted">
-              No income recorded yet. Add your first day&apos;s takings to see
-              trends here.
-            </p>
-          )}
-        </Card>
-
-        <Card>
-          <SectionTitle>Channel mix · month</SectionTitle>
-          <div className="flex flex-col items-center gap-4">
-            <Donut
-              segments={channelSegments}
-              centerValue={moneyCompact(d.monthSum.total)}
-              centerLabel="total"
-            />
-            <ul className="w-full space-y-1.5">
-              {CHANNELS.map((c) => (
-                <li
-                  key={c.key}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="flex items-center gap-2 text-ink-muted">
-                    <Dot color={c.color} />
-                    {c.label}
-                  </span>
-                  <span className="font-medium text-ink">
-                    {money(d.monthSum[c.key])}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Card>
-      </div>
+      {/* Channel mix */}
+      <Card>
+        <SectionTitle>Channel mix · {formatMonth(d.monthLabel)}</SectionTitle>
+        <div className="flex flex-col items-center gap-6 sm:flex-row sm:gap-8">
+          <Donut
+            segments={channelSegments}
+            centerValue={moneyCompact(d.monthSum.total)}
+            centerLabel="total"
+          />
+          <ul className="w-full flex-1 space-y-1.5">
+            {CHANNELS.map((c) => (
+              <li
+                key={c.key}
+                className="flex items-center justify-between text-sm"
+              >
+                <span className="flex items-center gap-2 text-ink-muted">
+                  <Dot color={c.color} />
+                  {c.label}
+                </span>
+                <span className="font-medium text-ink">
+                  {money(d.monthSum[c.key])}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Card>
 
       {/* Today's shifts + labour */}
       <div className="grid gap-4 lg:grid-cols-3">

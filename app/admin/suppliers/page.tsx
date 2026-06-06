@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
+import { FormButton } from "@/components/FormButton";
 import { createSupplier } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -69,7 +70,7 @@ export default async function SuppliersPage({
               placeholder="Order days, account no., minimum order…"
             />
           </div>
-          <button className="btn-primary">Add supplier</button>
+          <FormButton className="btn-primary">Add supplier</FormButton>
         </form>
       </details>
 

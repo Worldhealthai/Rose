@@ -6,6 +6,7 @@ import { getDict } from "@/lib/i18n";
 import { today as todayFn, toISODate } from "@/lib/dates";
 import { ChecklistView } from "@/components/ChecklistView";
 import { PageHeader, Card, SectionTitle } from "@/components/ui";
+import { FormButton } from "@/components/FormButton";
 import { addTempLog } from "@/app/admin/temps/actions";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +47,7 @@ export default async function StaffChecklistPage() {
               <label className="label">{t.temps.reading}</label>
               <input name="temp" type="number" step="0.1" className="input" placeholder="4.0" required />
             </div>
-            <button className="btn-primary">{t.temps.add}</button>
+            <FormButton className="btn-primary">{t.temps.add}</FormButton>
           </form>
         </Card>
 

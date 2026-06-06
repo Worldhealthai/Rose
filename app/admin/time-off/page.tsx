@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { today as todayFn, formatDay, isSameDay } from "@/lib/dates";
 import { PageHeader, Card, SectionTitle, Badge, EmptyState } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { FormButton } from "@/components/FormButton";
 import { setTimeOffStatus, deleteTimeOff } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -57,15 +58,15 @@ export default async function TimeOffPage() {
                     <form action={setTimeOffStatus}>
                       <input type="hidden" name="id" value={r.id} />
                       <input type="hidden" name="status" value="APPROVED" />
-                      <button className="btn-primary !py-2">
+                      <FormButton className="btn-primary !py-2">
                         <Icon name="check" className="h-4 w-4" />
                         Approve
-                      </button>
+                      </FormButton>
                     </form>
                     <form action={setTimeOffStatus}>
                       <input type="hidden" name="id" value={r.id} />
                       <input type="hidden" name="status" value="DECLINED" />
-                      <button className="btn-secondary !py-2 text-danger">Decline</button>
+                      <FormButton className="btn-secondary !py-2 text-danger">Decline</FormButton>
                     </form>
                   </div>
                 </div>

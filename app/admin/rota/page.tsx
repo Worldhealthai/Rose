@@ -15,6 +15,7 @@ import {
 import { PageHeader, Card, StatCard, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Popover } from "@/components/Popover";
+import { FormButton } from "@/components/FormButton";
 import { createShift, updateShift, deleteShift, copyLastWeek } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -186,7 +187,7 @@ function DayCard({
             <input name="end" type="time" defaultValue="17:00" className="input" />
           </div>
           <input name="role" placeholder="Role (optional)" className="input" />
-          <button className="btn-secondary w-full">Add shift</button>
+          <FormButton className="btn-secondary w-full">Add shift</FormButton>
         </form>
       </details>
 
@@ -306,10 +307,10 @@ export default async function RotaPage({
       <div className="flex justify-center">
         <form action={copyLastWeek}>
           <input type="hidden" name="week" value={weekISO} />
-          <button className="btn-ghost text-sm">
+          <FormButton className="btn-ghost text-sm">
             <Icon name="calendar" className="h-4 w-4" />
             Copy last week&apos;s shifts
-          </button>
+          </FormButton>
         </form>
       </div>
 

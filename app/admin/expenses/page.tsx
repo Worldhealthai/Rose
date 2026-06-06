@@ -15,6 +15,7 @@ import {
 import { PageHeader, Card, StatCard, SectionTitle } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
+import { FormButton } from "@/components/FormButton";
 import { createExpense, deleteExpense } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -90,7 +91,7 @@ export default async function ExpensesPage({
             <label className="label">Note (optional)</label>
             <input name="note" className="input" placeholder="e.g. weekly meat order" />
           </div>
-          <button className="btn-primary">Add expense</button>
+          <FormButton className="btn-primary">Add expense</FormButton>
         </form>
       </Card>
 

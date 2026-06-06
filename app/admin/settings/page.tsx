@@ -4,6 +4,7 @@ import { getCommissionRates } from "@/lib/settings";
 import { CURRENCY_SYMBOL } from "@/lib/money";
 import { PageHeader, Card, SectionTitle } from "@/components/ui";
 import { Flash } from "@/components/Flash";
+import { FormButton } from "@/components/FormButton";
 import {
   updateRestaurantName,
   updateCommission,
@@ -39,7 +40,7 @@ export default async function SettingsPage({
               className="input sm:max-w-md"
             />
           </div>
-          <button className="btn-primary">Save</button>
+          <FormButton className="btn-primary">Save</FormButton>
         </form>
       </Card>
 
@@ -63,7 +64,7 @@ export default async function SettingsPage({
               <input name="deliveroo" type="number" step="0.5" min="0" max="100" defaultValue={Math.round(rates.deliveroo * 100) || ""} className="input" placeholder="0" />
             </div>
           </div>
-          <button className="btn-primary">Save commission</button>
+          <FormButton className="btn-primary">Save commission</FormButton>
         </form>
         <p className="mt-2 text-xs text-ink-faint">
           Z report ({CURRENCY_SYMBOL} in-house) has no commission.
@@ -100,7 +101,7 @@ export default async function SettingsPage({
               />
             </div>
           </div>
-          <button className="btn-primary">Change password</button>
+          <FormButton className="btn-primary">Change password</FormButton>
         </form>
       </Card>
     </div>

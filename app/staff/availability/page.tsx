@@ -16,6 +16,7 @@ import {
 import { PageHeader, Card, SectionTitle, Badge } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
+import { FormButton } from "@/components/FormButton";
 import { saveAvailability, requestTimeOff, cancelTimeOff } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -109,7 +110,7 @@ export default async function AvailabilityPage({
         })}
 
         <div className="sticky bottom-20 z-10 md:bottom-2">
-          <button className="btn-primary w-full shadow-lg">{t.save}</button>
+          <FormButton className="btn-primary w-full shadow-lg">{t.save}</FormButton>
         </div>
       </form>
 
@@ -129,7 +130,7 @@ export default async function AvailabilityPage({
               </div>
             </div>
             <input name="note" placeholder={tt.reason} className="input !py-2 text-sm" />
-            <button className="btn-secondary w-full">{tt.request}</button>
+            <FormButton className="btn-secondary w-full">{tt.request}</FormButton>
           </form>
         </Card>
 
