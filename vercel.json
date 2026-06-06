@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "prisma generate && timeout 120 prisma db push --skip-generate && next build",
+  "buildCommand": "prisma generate && node scripts/predeploy-check.mjs && timeout 120 prisma db push --skip-generate && next build",
   "installCommand": "npm install"
 }
