@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Icon } from "./icons";
 
 /**
  * A tap-to-toggle checkbox row. Updates instantly (optimistic) and saves in the
- * background, so it never feels laggy on a slow connection.
+ * background. Safe to navigate away mid-save: it won't refresh or error once
+ * this component has unmounted.
  */
 export function ToggleCheck({
   action,
@@ -28,17 +29,25 @@ export function ToggleCheck({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [checked, setChecked] = useState(checkedProp);
+  const mounted = useRef(true);
 
-  // Re-sync with the server value once it catches up (or changes elsewhere).
   useEffect(() => setChecked(checkedProp), [checkedProp]);
+  useEffect(() => () => {
+    mounted.current = false;
+  }, []);
 
   function onClick() {
     setChecked((c) => !c); // instant visual feedback
     const fd = new FormData();
     Object.entries(fields).forEach(([k, v]) => fd.set(k, v));
     startTransition(async () => {
-      await action(fd);
-      router.refresh();
+      try {
+        await action(fd);
+        if (mounted.current) router.refresh();
+      } catch {
+        // Navigated away or transient error — ignore; data is already saved
+        // server-side and will be correct on next load.
+      }
     });
   }
 

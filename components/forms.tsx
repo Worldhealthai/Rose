@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useRef,
   useState,
   useTransition,
@@ -12,10 +13,18 @@ import { useRouter } from "next/navigation";
 type FormState = { pending: boolean; saved: boolean };
 const FormCtx = createContext<FormState>({ pending: false, saved: false });
 
+/** Tracks whether the component is still mounted (so we don't refresh after nav). */
+function useMounted() {
+  const mounted = useRef(true);
+  useEffect(() => () => {
+    mounted.current = false;
+  }, []);
+  return mounted;
+}
+
 /**
  * A form that runs a server action and then forces an immediate client refresh,
- * so the UI updates instantly (no manual page reload). Exposes pending/saved
- * state to <SubmitButton> via context.
+ * so the UI updates instantly. Safe if the user navigates away mid-save.
  */
 export function RefreshForm({
   action,
@@ -32,6 +41,7 @@ export function RefreshForm({
   const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const mounted = useMounted();
 
   return (
     <FormCtx.Provider value={{ pending, saved }}>
@@ -40,11 +50,16 @@ export function RefreshForm({
         className={className}
         action={(fd) =>
           startTransition(async () => {
-            await action(fd);
-            router.refresh();
-            if (resetOnSuccess) formRef.current?.reset();
-            setSaved(true);
-            setTimeout(() => setSaved(false), 1800);
+            try {
+              await action(fd);
+              if (!mounted.current) return;
+              router.refresh();
+              if (resetOnSuccess) formRef.current?.reset();
+              setSaved(true);
+              setTimeout(() => mounted.current && setSaved(false), 1800);
+            } catch {
+              // Navigated away or transient error — ignore.
+            }
           })
         }
       >
@@ -70,6 +85,7 @@ export function RefreshButton({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const mounted = useMounted();
   return (
     <button
       type="button"
@@ -80,8 +96,12 @@ export function RefreshButton({
         const fd = new FormData();
         Object.entries(fields).forEach(([k, v]) => fd.set(k, v));
         startTransition(async () => {
-          await action(fd);
-          router.refresh();
+          try {
+            await action(fd);
+            if (mounted.current) router.refresh();
+          } catch {
+            // Navigated away or transient error — ignore.
+          }
         });
       }}
     >

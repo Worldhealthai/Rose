@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 /**
  * Inline "how much to order" note that saves automatically on blur / Enter and
- * shows clear feedback. Calls the given server action and refreshes.
+ * shows clear feedback. Safe to navigate away mid-save.
  */
 export function QuantityInput({
   action,
@@ -22,6 +22,11 @@ export function QuantityInput({
   const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const lastSaved = useRef(defaultValue);
+  const mounted = useRef(true);
+
+  useEffect(() => () => {
+    mounted.current = false;
+  }, []);
 
   function save(value: string) {
     if (value === lastSaved.current) return;
@@ -30,11 +35,16 @@ export function QuantityInput({
     fd.set("returnTo", returnTo);
     fd.set("neededNote", value);
     startTransition(async () => {
-      await action(fd);
-      lastSaved.current = value;
-      router.refresh();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1600);
+      try {
+        await action(fd);
+        lastSaved.current = value;
+        if (!mounted.current) return;
+        router.refresh();
+        setSaved(true);
+        setTimeout(() => mounted.current && setSaved(false), 1600);
+      } catch {
+        // Navigated away or transient error — ignore.
+      }
     });
   }
 
