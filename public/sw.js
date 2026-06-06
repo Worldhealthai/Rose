@@ -1,12 +1,8 @@
-// Minimal service worker — enables installing Rose to the home screen.
-// Network-first with no HTML caching, so the app is never stale.
+// Minimal service worker — its only job is to make Rose installable to the
+// home screen. It does NOT intercept requests, so it can never serve stale
+// content or interfere with navigation/login.
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) =>
-  event.waitUntil(self.clients.claim()),
-);
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request)),
-  );
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("fetch", () => {
+  // Intentionally empty: let the browser handle every request normally.
 });

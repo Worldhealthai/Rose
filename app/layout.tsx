@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     title: "Rose",
     statusBarStyle: "black-translucent",
   },
+  other: { "mobile-web-app-capable": "yes" },
   icons: {
     icon: [{ url: "/favicon-48.png", sizes: "48x48", type: "image/png" }],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],

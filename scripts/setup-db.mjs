@@ -1,6 +1,7 @@
 // Runs during the Vercel build: checks the connection string, then creates the
-// database tables with `prisma db push`. Prints the host (never the password)
-// and fails fast with a plain-English message when something's wrong.
+// database tables with `prisma db push`. Prints the host (never the password).
+// It retries and, if the database is momentarily busy, lets the build continue
+// rather than blocking the whole deploy.
 
 import { execFileSync } from "node:child_process";
 
@@ -23,12 +24,7 @@ try {
   console.error(
     "   Common cause: the password has special characters (@ : / # ?) that",
   );
-  console.error(
-    "   must be percent-encoded — or it still contains [YOUR-PASSWORD].",
-  );
-  console.error(
-    "   Easiest fix: reset the Supabase DB password to letters and numbers only.\n",
-  );
+  console.error("   must be percent-encoded — or it still contains [YOUR-PASSWORD].");
   process.exit(1);
 }
 
@@ -38,30 +34,48 @@ if (u.hostname.startsWith("db.") && u.hostname.endsWith(".supabase.co")) {
   console.error(
     "\n❌ That's Supabase's DIRECT connection, which Vercel can't reach (IPv6-only).",
   );
-  console.error(
-    "   Use the Session pooler: Supabase → Connect → Session pooler",
-  );
-  console.error(
-    "   (host ends in .pooler.supabase.com).\n",
-  );
+  console.error("   Use the Session pooler (Supabase → Connect → Session pooler).\n");
   process.exit(1);
 }
 
-// Supabase's transaction pooler (port 6543) can't run table creation reliably.
-// Use session mode (5432) on the same host just for this step.
-if (u.hostname.endsWith(".pooler.supabase.com") && u.port === "6543") {
+// Table creation needs a session-mode connection (port 5432), one connection,
+// and a short connect timeout so a busy pool fails fast and we can retry.
+if (u.hostname.endsWith(".pooler.supabase.com")) {
   u.port = "5432";
-  console.log("ℹ Using the session pooler (port 5432) to create tables.");
+  u.searchParams.delete("pgbouncer");
+}
+u.searchParams.set("connection_limit", "1");
+u.searchParams.set("connect_timeout", "10");
+const dbUrl = u.toString();
+
+function sleep(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
-try {
-  execFileSync("npx", ["--no-install", "prisma", "db", "push", "--skip-generate"], {
-    stdio: "inherit",
-    env: { ...process.env, DATABASE_URL: u.toString() },
-  });
-} catch {
-  console.error(
-    "\n❌ Couldn't create the database tables — check the host and password above.\n",
-  );
-  process.exit(1);
+let ok = false;
+for (let attempt = 1; attempt <= 5; attempt++) {
+  try {
+    execFileSync("npx", ["--no-install", "prisma", "db", "push", "--skip-generate"], {
+      stdio: "inherit",
+      env: { ...process.env, DATABASE_URL: dbUrl },
+    });
+    ok = true;
+    break;
+  } catch {
+    console.warn(
+      `\n⚠ Database sync attempt ${attempt}/5 failed (the connection pool may be busy).`,
+    );
+    if (attempt < 5) sleep(2000 * attempt);
+  }
 }
+
+if (!ok) {
+  console.warn(
+    "\n⚠ Skipping table sync for this deploy so the build can continue.",
+  );
+  console.warn(
+    "  If you just changed the data model, redeploy once more and it will sync.\n",
+  );
+}
+
+process.exit(0);

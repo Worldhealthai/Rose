@@ -14,11 +14,18 @@ export default async function LoginPage() {
   // First run on a fresh database: make sure an admin account exists.
   await ensureBootstrapAdmin();
 
-  const staff = await prisma.employee.findMany({
-    where: { active: true, role: "STAFF" },
-    orderBy: { name: "asc" },
-    select: { username: true, name: true, avatar: true },
-  });
+  // Stay resilient: if the database is momentarily busy, still render the login
+  // screen (manager/username sign-in works) instead of crashing.
+  let staff: { username: string; name: string; avatar: string | null }[] = [];
+  try {
+    staff = await prisma.employee.findMany({
+      where: { active: true, role: "STAFF" },
+      orderBy: { name: "asc" },
+      select: { username: true, name: true, avatar: true },
+    });
+  } catch {
+    staff = [];
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">

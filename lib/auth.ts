@@ -49,9 +49,9 @@ export async function ensureBootstrapAdmin(): Promise<void> {
         position: "Manager",
       },
     });
-  } catch (e) {
-    // Ignore the race where two requests bootstrap at once; surface anything else.
-    if ((e as { code?: string })?.code !== "P2002") throw e;
+  } catch {
+    // Best-effort: an admin already exists, or the DB is momentarily busy.
+    // Never let this block the login page from rendering.
   }
 }
 

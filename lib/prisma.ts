@@ -1,16 +1,21 @@
 import { PrismaClient } from "@prisma/client";
 
-// Supabase's transaction pooler (port 6543) doesn't work well with Prisma's
-// prepared statements. If a Supabase pooler URL is given on 6543, use session
-// mode (5432) on the same host instead — so it works no matter which string
-// was pasted into the environment variables.
+// On serverless (Vercel) + Supabase, use the transaction pooler (port 6543) with
+// PgBouncer mode so connections are multiplexed and short-lived. This avoids the
+// intermittent "connection" failures you get from holding session-mode
+// connections across many serverless invocations. Works whether the configured
+// URL is the session (5432) or transaction (6543) pooler.
 function resolveDatabaseUrl(): string | undefined {
   const url = process.env.DATABASE_URL;
   if (!url) return undefined;
   try {
     const u = new URL(url);
-    if (u.hostname.endsWith(".pooler.supabase.com") && u.port === "6543") {
-      u.port = "5432";
+    if (u.hostname.endsWith(".pooler.supabase.com")) {
+      u.port = "6543";
+      u.searchParams.set("pgbouncer", "true");
+      if (!u.searchParams.has("connection_limit")) {
+        u.searchParams.set("connection_limit", "1");
+      }
       return u.toString();
     }
   } catch {
