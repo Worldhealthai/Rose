@@ -16,7 +16,17 @@ export type NavItem = {
   label: string;
   icon: IconName;
   exact?: boolean;
+  badge?: number;
 };
+
+function Badge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="grid h-5 min-w-[1.25rem] place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
 
 function useIsActive() {
   const pathname = usePathname();
@@ -66,6 +76,7 @@ export function PortalShell({
   dir = "ltr",
   localeToggle,
   account,
+  alert,
   children,
 }: {
   user: { name: string; role: string; avatar?: string | null };
@@ -75,6 +86,7 @@ export function PortalShell({
   dir?: "ltr" | "rtl";
   localeToggle?: Locale;
   account?: { links: { href: string; label: string }[]; signOutLabel: string };
+  alert?: { href: string; count: number };
   children: React.ReactNode;
 }) {
   const isActive = useIsActive();
@@ -101,7 +113,8 @@ export function PortalShell({
                 }`}
               >
                 <Icon name={item.icon} className="h-5 w-5 shrink-0" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.badge ? <Badge count={item.badge} /> : null}
               </Link>
             );
           })}
@@ -131,13 +144,29 @@ export function PortalShell({
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border-soft bg-canvas/85 px-4 py-3 backdrop-blur md:hidden">
         <Brand subtitle={subtitle} />
         {mobileNav === "drawer" ? (
-          <button
-            onClick={() => setOpen(true)}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-border text-ink"
-            aria-label="Open menu"
-          >
-            <Icon name="menu" className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {alert && (
+              <Link
+                href={alert.href}
+                className="relative grid h-10 w-10 place-items-center rounded-xl border border-border text-ink"
+                aria-label="Notifications"
+              >
+                <Icon name="bell" className="h-5 w-5" />
+                {alert.count > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5">
+                    <Badge count={alert.count} />
+                  </span>
+                )}
+              </Link>
+            )}
+            <button
+              onClick={() => setOpen(true)}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-border text-ink"
+              aria-label="Open menu"
+            >
+              <Icon name="menu" className="h-5 w-5" />
+            </button>
+          </div>
         ) : (
           <AccountMenu
             name={user.name}
@@ -182,7 +211,8 @@ export function PortalShell({
                     }`}
                   >
                     <Icon name={item.icon} className="h-5 w-5" />
-                    {item.label}
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge ? <Badge count={item.badge} /> : null}
                   </Link>
                 );
               })}

@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { parseDay, startOfWeek, toISODate } from "@/lib/dates";
+import { parseDay, startOfWeek, toISODate, formatShort } from "@/lib/dates";
+import { createNotification } from "@/lib/notify";
 
 export async function saveAvailability(formData: FormData) {
   const me = await requireStaff();
@@ -29,8 +30,17 @@ export async function saveAvailability(formData: FormData) {
     prisma.availability.createMany({ data: rows }),
   ]);
 
+  if (me.role === "STAFF") {
+    await createNotification(
+      "availability",
+      `${me.name} updated availability for week of ${formatShort(weekStart)}`,
+      `/admin/rota?week=${toISODate(weekStart)}`,
+    );
+  }
+
   revalidatePath("/staff/availability");
   revalidatePath("/admin/rota");
+  revalidatePath("/admin");
   redirect(
     `/staff/availability?week=${toISODate(weekStart)}&ok=${encodeURIComponent("Availability saved.")}`,
   );
@@ -49,9 +59,18 @@ export async function requestTimeOff(formData: FormData) {
       note: String(formData.get("note") ?? "").trim() || null,
     },
   });
+  if (me.role === "STAFF") {
+    await createNotification(
+      "timeoff",
+      `${me.name} requested time off (${formatShort(startDate)}${
+        endDate > startDate ? ` – ${formatShort(endDate)}` : ""
+      })`,
+      "/admin/time-off",
+    );
+  }
   revalidatePath("/staff/availability");
   revalidatePath("/admin/time-off");
-  revalidatePath("/admin/rota");
+  revalidatePath("/admin");
   redirect(`/staff/availability?ok=${encodeURIComponent("Time-off requested.")}`);
 }
 

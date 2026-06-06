@@ -172,6 +172,20 @@ model TempLog {
   @@index([date])
 }
 
+/// An admin-facing alert created when staff do something (availability, time
+/// off, flagging an order).
+model Notification {
+  id        String   @id @default(cuid())
+  type      String // availability | timeoff | order
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read])
+  @@index([createdAt])
+}
+
 /// A recurring daily checklist task (e.g. "Clean beer keg").
 model Task {
   id          String           @id @default(cuid())

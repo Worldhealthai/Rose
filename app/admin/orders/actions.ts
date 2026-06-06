@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/auth";
+import { createNotification } from "@/lib/notify";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -21,11 +22,12 @@ function revalidateFor(supplierId?: string | null) {
 }
 
 export async function createProduct(formData: FormData) {
-  await requireUser();
+  const me = await requireUser();
   const name = str(formData, "name");
   const returnTo = safeReturn(formData);
   if (!name) redirect(returnTo);
   const supplierId = str(formData, "supplierId") || null;
+  const needed = formData.get("needed") === "on";
   await prisma.product.create({
     data: {
       name,
@@ -33,9 +35,16 @@ export async function createProduct(formData: FormData) {
       unit: str(formData, "unit") || null,
       category: str(formData, "category") || null,
       parLevel: str(formData, "parLevel") || null,
-      needed: formData.get("needed") === "on",
+      needed,
     },
   });
+  if (needed && me.role === "STAFF") {
+    await createNotification(
+      "order",
+      `${me.name} added "${name}" to the order list`,
+      "/admin/orders?filter=needed",
+    );
+  }
   revalidateFor(supplierId);
   redirect(returnTo);
 }
@@ -72,7 +81,7 @@ export async function deleteProduct(formData: FormData) {
 
 /** Flip a product's "needed" flag. Stays in place (no redirect). */
 export async function toggleProductNeeded(formData: FormData) {
-  await requireUser();
+  const me = await requireUser();
   const id = str(formData, "id");
   if (!id) return;
   const p = await prisma.product.findUnique({ where: { id } });
@@ -81,6 +90,14 @@ export async function toggleProductNeeded(formData: FormData) {
     where: { id },
     data: { needed: !p.needed, neededNote: p.needed ? null : p.neededNote },
   });
+  // Newly flagged (was not needed) by a staff member → notify.
+  if (!p.needed && me.role === "STAFF") {
+    await createNotification(
+      "order",
+      `${me.name} flagged "${p.name}" to order`,
+      "/admin/orders?filter=needed",
+    );
+  }
   revalidateFor(p.supplierId);
 }
 

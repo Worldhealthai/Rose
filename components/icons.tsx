@@ -31,7 +31,8 @@ export type IconName =
   | "receipt"
   | "wallet"
   | "sun"
-  | "thermometer";
+  | "thermometer"
+  | "bell";
 
 const PATHS: Record<IconName, JSX.Element> = {
   dashboard: (
@@ -184,6 +185,12 @@ const PATHS: Record<IconName, JSX.Element> = {
   ),
   thermometer: (
     <path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z" />
+  ),
+  bell: (
+    <>
+      <path d="M6 9a6 6 0 1 1 12 0c0 4.5 1.8 5.8 1.8 5.8H4.2S6 13.5 6 9z" />
+      <path d="M9.5 19a2.5 2.5 0 0 0 5 0" />
+    </>
   ),
 };
 
