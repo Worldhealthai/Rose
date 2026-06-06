@@ -3,7 +3,7 @@ import { getDashboardData } from "@/lib/analytics";
 import { money, moneyCompact } from "@/lib/money";
 import { formatMonth, formatShort, relativeDay } from "@/lib/dates";
 import { CHANNELS } from "@/lib/calc";
-import { PageHeader, StatCard, Card, SectionTitle, Badge } from "@/components/ui";
+import { PageHeader, StatCard, Card, SectionTitle, Badge, Dot } from "@/components/ui";
 import { BarTrend, Donut } from "@/components/charts";
 import { Icon } from "@/components/icons";
 
@@ -106,10 +106,7 @@ export default async function AdminDashboard() {
                   className="flex items-center justify-between text-sm"
                 >
                   <span className="flex items-center gap-2 text-ink-muted">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ background: c.color }}
-                    />
+                    <Dot color={c.color} />
                     {c.label}
                   </span>
                   <span className="font-medium text-ink">

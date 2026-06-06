@@ -145,6 +145,22 @@ export function EmptyState({
   );
 }
 
+/** A small colour dot (with a hairline ring so dark colours stay visible). */
+export function Dot({
+  color,
+  className = "",
+}: {
+  color: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-white/25 ${className}`}
+      style={{ background: color }}
+    />
+  );
+}
+
 /** A row label/value used in detail/profile cards. */
 export function DetailRow({
   icon,

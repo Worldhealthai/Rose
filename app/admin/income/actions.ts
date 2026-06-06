@@ -1,17 +1,12 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { parseMoney } from "@/lib/money";
-import { parseDay, startOfMonth } from "@/lib/dates";
+import { parseDay } from "@/lib/dates";
 
 const BASE = "/admin/income";
-
-function monthParam(d: Date): string {
-  return d.toISOString().slice(0, 7);
-}
 
 function parseCovers(v: FormDataEntryValue | null): number | null {
   if (v == null || String(v).trim() === "") return null;
@@ -38,11 +33,7 @@ export async function upsertIncome(formData: FormData) {
   });
 
   revalidatePath(BASE);
-  redirect(
-    `${BASE}?month=${monthParam(startOfMonth(date))}&ok=${encodeURIComponent(
-      "Takings saved.",
-    )}`,
-  );
+  revalidatePath("/admin");
 }
 
 export async function deleteIncome(formData: FormData) {
@@ -50,9 +41,5 @@ export async function deleteIncome(formData: FormData) {
   const date = parseDay(String(formData.get("date")));
   await prisma.dailyIncome.deleteMany({ where: { date } });
   revalidatePath(BASE);
-  redirect(
-    `${BASE}?month=${monthParam(startOfMonth(date))}&ok=${encodeURIComponent(
-      "Day removed.",
-    )}`,
-  );
+  revalidatePath("/admin");
 }

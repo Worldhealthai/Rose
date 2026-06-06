@@ -5,23 +5,28 @@ import { CHANNELS, incomeTotal, sumIncome, pct } from "@/lib/calc";
 import {
   today as todayFn,
   parseDay,
+  startOfWeek,
   startOfMonth,
   endOfMonth,
   addMonths,
+  addDays,
   toISODate,
   formatMonth,
   formatDay,
+  formatLongDay,
+  formatShort,
   relativeDay,
+  WEEKDAYS_SHORT,
 } from "@/lib/dates";
-import { PageHeader, Card, StatCard, SectionTitle, Badge } from "@/components/ui";
-import { Flash } from "@/components/Flash";
+import { PageHeader, Card, StatCard, SectionTitle, Dot } from "@/components/ui";
 import { BarTrend, StackedBar } from "@/components/charts";
 import { Icon } from "@/components/icons";
+import { RefreshForm, SubmitButton } from "@/components/forms";
 import { upsertIncome, deleteIncome } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const monthParam = (d: Date) => d.toISOString().slice(0, 7);
+type View = "day" | "week" | "month";
 
 function MoneyField({
   name,
@@ -37,7 +42,7 @@ function MoneyField({
   return (
     <div>
       <label className="label flex items-center gap-2">
-        <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
+        <Dot color={color} />
         {label}
       </label>
       <div className="relative">
@@ -52,7 +57,7 @@ function MoneyField({
           inputMode="decimal"
           defaultValue={value ?? ""}
           placeholder="0.00"
-          className="input pl-7"
+          className="input pl-8"
         />
       </div>
     </div>
@@ -62,70 +67,110 @@ function MoneyField({
 export default async function IncomePage({
   searchParams,
 }: {
-  searchParams: { month?: string; date?: string; ok?: string; error?: string };
+  searchParams: { view?: string; anchor?: string; date?: string };
 }) {
   const today = todayFn();
-  const selectedDate = parseDay(searchParams.date);
-  const monthAnchor = searchParams.month
-    ? parseDay(`${searchParams.month}-01`)
-    : today;
-  const monthStart = startOfMonth(monthAnchor);
-  const monthEnd = endOfMonth(monthAnchor);
+  const view: View =
+    searchParams.view === "day" || searchParams.view === "week"
+      ? searchParams.view
+      : "month";
+  const anchor = parseDay(searchParams.anchor);
 
-  const [editingRow, monthRows] = await Promise.all([
+  // Work out the period being viewed.
+  let periodStart: Date;
+  let periodEnd: Date;
+  let prevAnchor: Date;
+  let nextAnchor: Date;
+  let periodLabel: string;
+  if (view === "day") {
+    periodStart = anchor;
+    periodEnd = anchor;
+    prevAnchor = addDays(anchor, -1);
+    nextAnchor = addDays(anchor, 1);
+    periodLabel = formatLongDay(anchor);
+  } else if (view === "week") {
+    periodStart = startOfWeek(anchor);
+    periodEnd = addDays(periodStart, 6);
+    prevAnchor = addDays(periodStart, -7);
+    nextAnchor = addDays(periodStart, 7);
+    periodLabel = `${formatShort(periodStart)} – ${formatShort(periodEnd)}`;
+  } else {
+    periodStart = startOfMonth(anchor);
+    periodEnd = endOfMonth(anchor);
+    prevAnchor = addMonths(periodStart, -1);
+    nextAnchor = addMonths(periodStart, 1);
+    periodLabel = formatMonth(periodStart);
+  }
+
+  const selectedDate = searchParams.date
+    ? parseDay(searchParams.date)
+    : view === "day"
+      ? anchor
+      : today;
+
+  const [editingRow, rows] = await Promise.all([
     prisma.dailyIncome.findUnique({ where: { date: selectedDate } }),
     prisma.dailyIncome.findMany({
-      where: { date: { gte: monthStart, lte: monthEnd } },
+      where: { date: { gte: periodStart, lte: periodEnd } },
       orderBy: { date: "desc" },
     }),
   ]);
 
-  const summary = sumIncome(monthRows);
-  const avg = monthRows.length ? summary.total / monthRows.length : 0;
+  const summary = sumIncome(rows);
+  const avg = rows.length ? summary.total / rows.length : 0;
   const best =
-    monthRows.length > 0
-      ? monthRows.reduce((a, b) => (incomeTotal(b) > incomeTotal(a) ? b : a))
+    rows.length > 0
+      ? rows.reduce((a, b) => (incomeTotal(b) > incomeTotal(a) ? b : a))
       : null;
+  const deliveryShare = pct(
+    summary.justEat + summary.uberEats + summary.deliveroo,
+    summary.total,
+  );
 
-  const byDay = new Map(monthRows.map((r) => [toISODate(r.date), r]));
-  const daysInMonth = monthEnd.getUTCDate();
-  const trend = Array.from({ length: daysInMonth }, (_, i) => {
-    const iso = toISODate(
-      new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth(), i + 1)),
-    );
-    const row = byDay.get(iso);
-    return { label: String(i + 1), value: row ? incomeTotal(row) : 0 };
+  // Trend bars (week = 7 days, month = each day; none for a single day).
+  const byDay = new Map(rows.map((r) => [toISODate(r.date), r]));
+  const trendLen =
+    view === "week" ? 7 : view === "month" ? periodEnd.getUTCDate() : 0;
+  const trend = Array.from({ length: trendLen }, (_, i) => {
+    const d = addDays(periodStart, i);
+    const r = byDay.get(toISODate(d));
+    return {
+      label: view === "week" ? WEEKDAYS_SHORT[i] : String(i + 1),
+      value: r ? incomeTotal(r) : 0,
+    };
   });
 
   const editingDateISO = toISODate(selectedDate);
+  const base = "/admin/income";
+  const periodHref = (a: Date) => `${base}?view=${view}&anchor=${toISODate(a)}`;
+  const editHref = (d: Date) =>
+    `${base}?view=${view}&anchor=${toISODate(anchor)}&date=${toISODate(d)}`;
+
+  const VIEWS: { key: View; label: string }[] = [
+    { key: "day", label: "Day" },
+    { key: "week", label: "Week" },
+    { key: "month", label: "Month" },
+  ];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Income"
-        subtitle="Daily takings, split by channel"
-      />
-      <Flash ok={searchParams.ok} error={searchParams.error} />
+      <PageHeader title="Income" subtitle="Daily takings, split by channel" />
 
       {/* Entry / edit form */}
       <Card>
         <SectionTitle
           action={
-            editingRow ? (
-              <Link
-                href={`/admin/income?month=${monthParam(monthStart)}&date=${toISODate(today)}`}
-                className="text-xs font-medium text-forest-300 hover:underline"
-              >
-                + New day
-              </Link>
-            ) : null
+            <Link
+              href={`${base}?view=${view}&anchor=${toISODate(anchor)}&date=${toISODate(today)}`}
+              className="text-xs font-medium text-forest-300 hover:underline"
+            >
+              + New day
+            </Link>
           }
         >
-          {editingRow
-            ? `Edit ${formatDay(selectedDate)}`
-            : "Enter a day's takings"}
+          {editingRow ? `Edit ${formatDay(selectedDate)}` : "Enter a day's takings"}
         </SectionTitle>
-        <form action={upsertIncome} className="space-y-4">
+        <RefreshForm action={upsertIncome} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="label">Date</label>
@@ -151,30 +196,15 @@ export default async function IncomePage({
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <MoneyField
-              name="zReport"
-              label="Z report (till)"
-              color="#37c97e"
-              value={editingRow?.zReport}
-            />
-            <MoneyField
-              name="justEat"
-              label="Just Eat"
-              color="#f59e0b"
-              value={editingRow?.justEat}
-            />
-            <MoneyField
-              name="uberEats"
-              label="Uber Eats"
-              color="#34d399"
-              value={editingRow?.uberEats}
-            />
-            <MoneyField
-              name="deliveroo"
-              label="Deliveroo"
-              color="#22d3ee"
-              value={editingRow?.deliveroo}
-            />
+            {CHANNELS.map((c) => (
+              <MoneyField
+                key={c.key}
+                name={c.key}
+                label={c.label}
+                color={c.color}
+                value={editingRow?.[c.key]}
+              />
+            ))}
           </div>
           <div>
             <label className="label">Notes (optional)</label>
@@ -185,75 +215,102 @@ export default async function IncomePage({
               className="input"
             />
           </div>
-          <button className="btn-primary">
-            {editingRow ? "Update day" : "Save takings"}
-          </button>
-        </form>
+          <SubmitButton>{editingRow ? "Update day" : "Save takings"}</SubmitButton>
+        </RefreshForm>
         {editingRow && (
-          <form action={deleteIncome} className="mt-3">
+          <RefreshForm action={deleteIncome} className="mt-3">
             <input type="hidden" name="date" value={editingDateISO} />
-            <button className="btn-ghost text-danger hover:bg-danger/10">
+            <SubmitButton
+              className="btn-ghost text-danger hover:bg-danger/10"
+              pendingLabel="Deleting…"
+              savedLabel="Deleted"
+            >
               <Icon name="trash" className="h-4 w-4" />
               Delete this day
-            </button>
-          </form>
+            </SubmitButton>
+          </RefreshForm>
         )}
       </Card>
 
-      {/* Month navigation + summary */}
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <Link
-            href={`/admin/income?month=${monthParam(addMonths(monthStart, -1))}`}
-            className="btn-secondary !px-3"
-            aria-label="Previous month"
-          >
-            <Icon name="chevronLeft" className="h-4 w-4" />
-          </Link>
-          <h2 className="text-lg font-semibold text-ink">
-            {formatMonth(monthStart)}
-          </h2>
-          <Link
-            href={`/admin/income?month=${monthParam(addMonths(monthStart, 1))}`}
-            className="btn-secondary !px-3"
-            aria-label="Next month"
-          >
-            <Icon name="chevronRight" className="h-4 w-4" />
+      {/* View switch */}
+      <div className="flex justify-center">
+        <div className="inline-flex rounded-xl border border-border p-0.5 text-sm">
+          {VIEWS.map((v) => (
+            <Link
+              key={v.key}
+              href={`${base}?view=${v.key}`}
+              className={`rounded-lg px-4 py-1.5 font-medium transition ${
+                view === v.key
+                  ? "bg-forest-500/20 text-forest-100"
+                  : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              {v.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Period navigation */}
+      <div className="flex items-center justify-between gap-2">
+        <Link href={periodHref(prevAnchor)} className="btn-secondary !px-3" aria-label="Previous">
+          <Icon name="chevronLeft" className="h-4 w-4" />
+        </Link>
+        <div className="text-center">
+          <p className="font-semibold text-ink">{periodLabel}</p>
+          <Link href={`${base}?view=${view}`} className="text-xs text-forest-300 hover:underline">
+            {view === "day" ? "Today" : view === "week" ? "This week" : "This month"}
           </Link>
         </div>
+        <Link href={periodHref(nextAnchor)} className="btn-secondary !px-3" aria-label="Next">
+          <Icon name="chevronRight" className="h-4 w-4" />
+        </Link>
+      </div>
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Month total" value={money(summary.total)} icon="cash" />
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          label={view === "day" ? "Day total" : `${view} total`}
+          value={money(summary.total)}
+          icon="cash"
+        />
+        {view === "day" ? (
           <StatCard
-            label="Avg / day"
-            value={money(avg)}
-            sub={`${monthRows.length} days`}
-            icon="trend"
+            label="Covers"
+            value={best?.covers ?? rows[0]?.covers ?? "—"}
+            icon="users"
             accent="#34d399"
           />
-          <StatCard
-            label="Best day"
-            value={best ? money(incomeTotal(best)) : "—"}
-            sub={best ? formatDay(best.date) : undefined}
-            icon="star"
-            accent="#22d3ee"
-          />
-          <StatCard
-            label="Delivery share"
-            value={`${pct(
-              summary.justEat + summary.uberEats + summary.deliveroo,
-              summary.total,
-            )}%`}
-            sub="of takings"
-            icon="truck"
-            accent="#f59e0b"
-          />
-        </div>
+        ) : (
+          <>
+            <StatCard
+              label="Avg / day"
+              value={money(avg)}
+              sub={`${rows.length} day${rows.length === 1 ? "" : "s"}`}
+              icon="trend"
+              accent="#34d399"
+            />
+            <StatCard
+              label="Best day"
+              value={best ? money(incomeTotal(best)) : "—"}
+              sub={best ? formatDay(best.date) : undefined}
+              icon="star"
+              accent="#22d3ee"
+            />
+          </>
+        )}
+        <StatCard
+          label="Delivery share"
+          value={`${deliveryShare}%`}
+          sub="of takings"
+          icon="truck"
+          accent="#f59e0b"
+        />
       </div>
 
       {/* Channel breakdown */}
       <Card>
-        <SectionTitle>Channel breakdown · {formatMonth(monthStart)}</SectionTitle>
+        <SectionTitle>Channel breakdown · {periodLabel}</SectionTitle>
         <div className="mb-4">
           <StackedBar
             segments={CHANNELS.map((c) => ({
@@ -267,15 +324,10 @@ export default async function IncomePage({
           {CHANNELS.map((c) => (
             <div key={c.key} className="rounded-xl bg-canvas/40 p-3">
               <p className="flex items-center gap-2 text-xs text-ink-muted">
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ background: c.color }}
-                />
+                <Dot color={c.color} />
                 {c.label}
               </p>
-              <p className="mt-1 text-lg font-bold text-ink">
-                {money(summary[c.key])}
-              </p>
+              <p className="mt-1 text-lg font-bold text-ink">{money(summary[c.key])}</p>
               <p className="text-xs text-ink-faint">
                 {pct(summary[c.key], summary.total)}% of total
               </p>
@@ -284,8 +336,8 @@ export default async function IncomePage({
         </div>
       </Card>
 
-      {/* Daily trend */}
-      {monthRows.length > 0 && (
+      {/* Trend */}
+      {trendLen > 0 && rows.length > 0 && (
         <Card>
           <SectionTitle>Daily takings</SectionTitle>
           <BarTrend data={trend} formatValue={(v) => money(v)} />
@@ -294,35 +346,31 @@ export default async function IncomePage({
 
       {/* Day list */}
       <div>
-        <SectionTitle>Recorded days</SectionTitle>
-        {monthRows.length === 0 ? (
+        <SectionTitle>{view === "day" ? "This day" : "Recorded days"}</SectionTitle>
+        {rows.length === 0 ? (
           <Card>
             <p className="py-6 text-center text-sm text-ink-muted">
-              No takings recorded for {formatMonth(monthStart)} yet.
+              No takings recorded for {periodLabel} yet.
             </p>
           </Card>
         ) : (
           <ul className="space-y-2.5">
-            {monthRows.map((r) => {
+            {rows.map((r) => {
               const total = incomeTotal(r);
               return (
                 <Card as="li" key={r.id}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-ink">
-                        {formatDay(r.date)}
-                      </p>
+                      <p className="font-semibold text-ink">{formatDay(r.date)}</p>
                       <p className="text-xs text-ink-faint">
                         {relativeDay(r.date)}
                         {r.covers ? ` · ${r.covers} covers` : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold text-ink">
-                        {money(total)}
-                      </span>
+                      <span className="text-lg font-bold text-ink">{money(total)}</span>
                       <Link
-                        href={`/admin/income?month=${monthParam(monthStart)}&date=${toISODate(r.date)}`}
+                        href={editHref(r.date)}
                         className="grid h-9 w-9 place-items-center rounded-lg border border-border text-ink-muted hover:text-ink"
                         aria-label="Edit day"
                       >
@@ -341,15 +389,9 @@ export default async function IncomePage({
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
                     {CHANNELS.map((c) => (
-                      <span
-                        key={c.key}
-                        className="flex items-center justify-between text-xs"
-                      >
+                      <span key={c.key} className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5 text-ink-faint">
-                          <span
-                            className="h-2 w-2 rounded-full"
-                            style={{ background: c.color }}
-                          />
+                          <Dot color={c.color} />
                           {c.label}
                         </span>
                         <span className="text-ink-muted">{money(r[c.key])}</span>

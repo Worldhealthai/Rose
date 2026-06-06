@@ -24,7 +24,7 @@ export function incomeTotal(i: IncomeLike): number {
 export const CHANNELS = [
   { key: "zReport", label: "Z report", color: "#37c97e" },
   { key: "justEat", label: "Just Eat", color: "#f59e0b" },
-  { key: "uberEats", label: "Uber Eats", color: "#34d399" },
+  { key: "uberEats", label: "Uber Eats", color: "#0a0a0a" },
   { key: "deliveroo", label: "Deliveroo", color: "#22d3ee" },
 ] as const;
 

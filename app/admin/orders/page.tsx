@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { NeededToggle } from "@/components/NeededToggle";
+import { QuantityInput } from "@/components/QuantityInput";
 import {
   createProduct,
   updateProduct,
@@ -102,17 +103,12 @@ function ProductRow({
         </div>
       </div>
       {p.needed && (
-        <form action={setNeededNote} className="mt-2 flex gap-2">
-          <input type="hidden" name="id" value={p.id} />
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <input
-            name="neededNote"
-            defaultValue={p.neededNote ?? ""}
-            placeholder="How much to order? e.g. 2 cases"
-            className="input !py-1.5 text-sm"
-          />
-          <button className="btn-secondary !py-1.5">Save</button>
-        </form>
+        <QuantityInput
+          action={setNeededNote}
+          id={p.id}
+          returnTo={returnTo}
+          defaultValue={p.neededNote ?? ""}
+        />
       )}
     </li>
   );

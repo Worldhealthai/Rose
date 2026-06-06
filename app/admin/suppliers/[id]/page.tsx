@@ -5,6 +5,7 @@ import { Card, Badge, DetailRow, SectionTitle } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { NeededToggle } from "@/components/NeededToggle";
+import { QuantityInput } from "@/components/QuantityInput";
 import { updateSupplier, deleteSupplier } from "../actions";
 import {
   createProduct,
@@ -183,17 +184,12 @@ export default async function SupplierProfile({
                   </div>
                 </div>
                 {p.needed && (
-                  <form action={setNeededNote} className="mt-2 flex gap-2">
-                    <input type="hidden" name="id" value={p.id} />
-                    <input type="hidden" name="returnTo" value={returnTo} />
-                    <input
-                      name="neededNote"
-                      defaultValue={p.neededNote ?? ""}
-                      placeholder="How much to order? e.g. 2 cases"
-                      className="input !py-1.5 text-sm"
-                    />
-                    <button className="btn-secondary !py-1.5">Save</button>
-                  </form>
+                  <QuantityInput
+                    action={setNeededNote}
+                    id={p.id}
+                    returnTo={returnTo}
+                    defaultValue={p.neededNote ?? ""}
+                  />
                 )}
               </li>
             ))}

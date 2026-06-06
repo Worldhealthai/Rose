@@ -28,52 +28,53 @@ textarea {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Inputs */
-.input {
-  @apply w-full rounded-xl border border-border bg-canvas/60 px-3.5 py-2.5 text-ink
-         placeholder:text-ink-faint outline-none transition
-         focus:border-forest-400 focus:ring-2 focus:ring-forest-500/25;
-}
-select.input {
-  @apply appearance-none bg-canvas/60;
-}
-.label {
-  @apply mb-1.5 block text-sm font-medium text-ink-muted;
+/* Component classes live in the components layer so Tailwind utilities
+   (e.g. pl-7, py-1.5) reliably override them on individual elements. */
+@layer components {
+  .input {
+    @apply w-full rounded-xl border border-border bg-canvas/60 px-3.5 py-2.5 text-ink
+           placeholder:text-ink-faint outline-none transition
+           focus:border-forest-400 focus:ring-2 focus:ring-forest-500/25;
+  }
+  select.input {
+    @apply appearance-none bg-canvas/60;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink-muted;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+           transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-forest-500 text-canvas hover:bg-forest-400 shadow-[0_8px_24px_-10px_rgba(20,174,96,0.7)];
+  }
+  .btn-secondary {
+    @apply btn border border-border bg-surface text-ink hover:border-forest-500/60 hover:bg-elevated;
+  }
+  .btn-ghost {
+    @apply btn text-ink-muted hover:bg-surface hover:text-ink;
+  }
+  .btn-danger {
+    @apply btn border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20;
+  }
+
+  .card {
+    @apply rounded-2xl border border-border-soft bg-surface/80 shadow-card backdrop-blur-sm;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
 }
 
-/* Buttons */
-.btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
-         transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
-}
-.btn-primary {
-  @apply btn bg-forest-500 text-canvas hover:bg-forest-400 shadow-[0_8px_24px_-10px_rgba(20,174,96,0.7)];
-}
-.btn-secondary {
-  @apply btn border border-border bg-surface text-ink hover:border-forest-500/60 hover:bg-elevated;
-}
-.btn-ghost {
-  @apply btn text-ink-muted hover:bg-surface hover:text-ink;
-}
-.btn-danger {
-  @apply btn border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20;
-}
-
-/* Cards */
-.card {
-  @apply rounded-2xl border border-border-soft bg-surface/80 shadow-card backdrop-blur-sm;
-}
-
-/* Chips / badges */
-.badge {
-  @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
-}
-
-/* Hide scrollbars on horizontal nav scrollers */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
