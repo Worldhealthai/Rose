@@ -3,9 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import { NeededToggle } from "@/components/NeededToggle";
 import { QuantityInput } from "@/components/QuantityInput";
-import { createProduct, setNeededNote } from "@/app/admin/orders/actions";
+import { ToggleCheck } from "@/components/ToggleCheck";
+import {
+  createProduct,
+  setNeededNote,
+  toggleProductNeeded,
+} from "@/app/admin/orders/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -115,16 +119,18 @@ export default async function StaffOrdersPage({
                 <Icon name="truck" className="h-4 w-4 text-forest-300" />
                 {g.name}
               </p>
-              <ul className="divide-y divide-border-soft">
+              <ul className="space-y-1.5">
                 {g.items.map((p) => (
-                  <li key={p.id} className="py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-ink">{p.name}</p>
-                        {p.unit && <p className="text-xs text-ink-faint">{p.unit}</p>}
-                      </div>
-                      <NeededToggle id={p.id} needed={p.needed} returnTo={returnTo} />
-                    </div>
+                  <li key={p.id}>
+                    <ToggleCheck
+                      action={toggleProductNeeded}
+                      fields={{ id: p.id, returnTo }}
+                      checked={p.needed}
+                      title={p.name}
+                      subtitle={p.unit ?? undefined}
+                      strike={false}
+                      accent="#f59e0b"
+                    />
                     {p.needed && (
                       <QuantityInput
                         action={setNeededNote}

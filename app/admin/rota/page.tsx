@@ -14,6 +14,7 @@ import {
 } from "@/lib/dates";
 import { PageHeader, Card, StatCard, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { Popover } from "@/components/Popover";
 import { createShift, updateShift, deleteShift } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -102,50 +103,39 @@ function DayCard({
                 <span className="rounded-lg bg-forest-500/10 px-2 py-1 text-xs font-medium text-forest-200">
                   {s.start}–{s.end}
                 </span>
-                <details className="relative">
-                  <summary className="grid h-7 w-7 cursor-pointer list-none place-items-center rounded-lg text-ink-faint hover:bg-elevated hover:text-ink">
-                    <Icon name="edit" className="h-3.5 w-3.5" />
-                  </summary>
-                  <div className="absolute right-0 z-10 mt-1 w-60 rounded-xl border border-border bg-elevated p-3 shadow-card">
-                    <form action={updateShift} className="space-y-2">
-                      <input type="hidden" name="id" value={s.id} />
-                      <input type="hidden" name="week" value={weekISO} />
-                      <EmployeeSelect
-                        employees={employees}
-                        defaultValue={s.employeeId}
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          name="start"
-                          type="time"
-                          defaultValue={s.start}
-                          className="input"
-                        />
-                        <input
-                          name="end"
-                          type="time"
-                          defaultValue={s.end}
-                          className="input"
-                        />
+                <Popover title="Edit shift">
+                  <form action={updateShift} className="space-y-3">
+                    <input type="hidden" name="id" value={s.id} />
+                    <input type="hidden" name="week" value={weekISO} />
+                    <div>
+                      <label className="label">Who</label>
+                      <EmployeeSelect employees={employees} defaultValue={s.employeeId} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="label">Start</label>
+                        <input name="start" type="time" defaultValue={s.start} className="input" />
                       </div>
-                      <input
-                        name="role"
-                        defaultValue={s.role ?? ""}
-                        placeholder="Role (optional)"
-                        className="input"
-                      />
-                      <button className="btn-primary w-full !py-2">Save</button>
-                    </form>
-                    <form action={deleteShift} className="mt-2">
-                      <input type="hidden" name="id" value={s.id} />
-                      <input type="hidden" name="week" value={weekISO} />
-                      <button className="btn-ghost w-full !py-2 text-danger hover:bg-danger/10">
-                        <Icon name="trash" className="h-4 w-4" />
-                        Delete shift
-                      </button>
-                    </form>
-                  </div>
-                </details>
+                      <div>
+                        <label className="label">End</label>
+                        <input name="end" type="time" defaultValue={s.end} className="input" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="label">Role (optional)</label>
+                      <input name="role" defaultValue={s.role ?? ""} className="input" />
+                    </div>
+                    <button className="btn-primary w-full">Save changes</button>
+                  </form>
+                  <form action={deleteShift} className="mt-2">
+                    <input type="hidden" name="id" value={s.id} />
+                    <input type="hidden" name="week" value={weekISO} />
+                    <button className="btn-ghost w-full text-danger hover:bg-danger/10">
+                      <Icon name="trash" className="h-4 w-4" />
+                      Delete shift
+                    </button>
+                  </form>
+                </Popover>
               </div>
             </li>
           ))}

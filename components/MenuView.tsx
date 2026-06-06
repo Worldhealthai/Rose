@@ -1,6 +1,7 @@
 import { Card, SectionTitle, Badge, EmptyState } from "./ui";
 import { Icon } from "./icons";
 import { ToggleCheck } from "./ToggleCheck";
+import { Popover } from "./Popover";
 import { RefreshForm, RefreshButton, SubmitButton } from "./forms";
 import { money } from "@/lib/money";
 import {
@@ -142,27 +143,31 @@ export function MenuView({
                         Mark off
                       </RefreshButton>
                       {isAdmin && (
-                        <details className="relative">
-                          <summary className="grid h-8 w-8 cursor-pointer list-none place-items-center rounded-lg text-ink-faint hover:bg-elevated hover:text-ink">
-                            <Icon name="edit" className="h-4 w-4" />
-                          </summary>
-                          <div className="absolute right-0 z-10 mt-1 w-60 rounded-xl border border-border bg-elevated p-3 shadow-card">
-                            <form action={updateMenuItem} className="space-y-2">
-                              <input type="hidden" name="id" value={it.id} />
-                              <input name="name" defaultValue={it.name} className="input !py-2" placeholder="Name" />
-                              <input name="category" defaultValue={it.category ?? ""} className="input !py-2" placeholder="Category" />
-                              <input name="price" type="number" step="0.01" min="0" defaultValue={it.price ?? ""} className="input !py-2" placeholder="Price" />
-                              <button className="btn-primary w-full !py-2">Save</button>
-                            </form>
-                            <form action={deleteMenuItem} className="mt-2">
-                              <input type="hidden" name="id" value={it.id} />
-                              <button className="btn-ghost w-full !py-2 text-danger hover:bg-danger/10">
-                                <Icon name="trash" className="h-4 w-4" />
-                                Delete
-                              </button>
-                            </form>
-                          </div>
-                        </details>
+                        <Popover title="Edit item">
+                          <form action={updateMenuItem} className="space-y-3">
+                            <input type="hidden" name="id" value={it.id} />
+                            <div>
+                              <label className="label">Name</label>
+                              <input name="name" defaultValue={it.name} className="input" />
+                            </div>
+                            <div>
+                              <label className="label">Category</label>
+                              <input name="category" defaultValue={it.category ?? ""} className="input" />
+                            </div>
+                            <div>
+                              <label className="label">Price</label>
+                              <input name="price" type="number" step="0.01" min="0" defaultValue={it.price ?? ""} className="input" />
+                            </div>
+                            <button className="btn-primary w-full">Save changes</button>
+                          </form>
+                          <form action={deleteMenuItem} className="mt-2">
+                            <input type="hidden" name="id" value={it.id} />
+                            <button className="btn-ghost w-full text-danger hover:bg-danger/10">
+                              <Icon name="trash" className="h-4 w-4" />
+                              Delete item
+                            </button>
+                          </form>
+                        </Popover>
                       )}
                     </div>
                   </div>

@@ -47,24 +47,24 @@ export function StatCard({
   accent?: string;
 }) {
   return (
-    <div className="card flex items-start gap-3 p-4">
-      {icon && (
-        <span
-          className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl"
-          style={{ background: `${accent}1f`, color: accent }}
-        >
-          <Icon name={icon} className="h-5 w-5" />
-        </span>
-      )}
-      <div className="min-w-0">
-        <p className="truncate text-xs font-medium uppercase tracking-wide text-ink-faint">
+    <div className="card p-3 sm:p-4">
+      <div className="flex items-center gap-2">
+        {icon && (
+          <span
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg sm:h-8 sm:w-8"
+            style={{ background: `${accent}1f`, color: accent }}
+          >
+            <Icon name={icon} className="h-4 w-4" />
+          </span>
+        )}
+        <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-ink-faint">
           {label}
         </p>
-        <p className="mt-0.5 text-xl font-bold leading-tight text-ink sm:text-2xl">
-          {value}
-        </p>
-        {sub && <p className="mt-0.5 text-xs text-ink-muted">{sub}</p>}
       </div>
+      <p className="mt-1.5 text-lg font-bold leading-tight text-ink sm:text-2xl">
+        {value}
+      </p>
+      {sub && <p className="mt-0.5 text-[11px] text-ink-muted">{sub}</p>}
     </div>
   );
 }

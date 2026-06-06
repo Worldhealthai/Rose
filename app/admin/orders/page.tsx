@@ -2,13 +2,15 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import { NeededToggle } from "@/components/NeededToggle";
 import { QuantityInput } from "@/components/QuantityInput";
+import { ToggleCheck } from "@/components/ToggleCheck";
+import { Popover } from "@/components/Popover";
 import {
   createProduct,
   updateProduct,
   deleteProduct,
   setNeededNote,
+  toggleProductNeeded,
   clearSupplierNeeded,
 } from "./actions";
 
@@ -50,57 +52,61 @@ function ProductRow({
   suppliers: SupplierLite[];
   returnTo: string;
 }) {
+  const meta =
+    [p.category, p.unit, p.parLevel && `par: ${p.parLevel}`]
+      .filter(Boolean)
+      .join(" · ") || undefined;
   return (
-    <li className="py-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate font-medium text-ink">{p.name}</p>
-          <p className="text-xs text-ink-faint">
-            {[p.category, p.unit, p.parLevel && `par: ${p.parLevel}`]
-              .filter(Boolean)
-              .join(" · ") || "—"}
-          </p>
+    <li>
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <ToggleCheck
+            action={toggleProductNeeded}
+            fields={{ id: p.id, returnTo }}
+            checked={p.needed}
+            title={p.name}
+            subtitle={meta}
+            strike={false}
+            accent="#f59e0b"
+          />
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <NeededToggle id={p.id} needed={p.needed} returnTo={returnTo} />
-          <details className="relative">
-            <summary className="grid h-8 w-8 cursor-pointer list-none place-items-center rounded-lg text-ink-faint hover:bg-elevated hover:text-ink">
-              <Icon name="edit" className="h-4 w-4" />
-            </summary>
-            <div className="absolute right-0 z-10 mt-1 w-64 rounded-xl border border-border bg-elevated p-3 shadow-card">
-              <form action={updateProduct} className="space-y-2">
-                <input type="hidden" name="id" value={p.id} />
-                <input type="hidden" name="returnTo" value={returnTo} />
-                <input name="name" defaultValue={p.name} className="input" placeholder="Name" />
-                <SupplierSelect suppliers={suppliers} defaultValue={p.supplierId} />
-                <div className="grid grid-cols-2 gap-2">
-                  <input name="unit" defaultValue={p.unit ?? ""} className="input" placeholder="Unit" />
-                  <input
-                    name="category"
-                    defaultValue={p.category ?? ""}
-                    className="input"
-                    placeholder="Category"
-                  />
-                </div>
-                <input
-                  name="parLevel"
-                  defaultValue={p.parLevel ?? ""}
-                  className="input"
-                  placeholder="Par level (optional)"
-                />
-                <button className="btn-primary w-full !py-2">Save</button>
-              </form>
-              <form action={deleteProduct} className="mt-2">
-                <input type="hidden" name="id" value={p.id} />
-                <input type="hidden" name="returnTo" value={returnTo} />
-                <button className="btn-ghost w-full !py-2 text-danger hover:bg-danger/10">
-                  <Icon name="trash" className="h-4 w-4" />
-                  Delete product
-                </button>
-              </form>
+        <Popover title="Edit product">
+          <form action={updateProduct} className="space-y-3">
+            <input type="hidden" name="id" value={p.id} />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <div>
+              <label className="label">Name</label>
+              <input name="name" defaultValue={p.name} className="input" />
             </div>
-          </details>
-        </div>
+            <div>
+              <label className="label">Supplier</label>
+              <SupplierSelect suppliers={suppliers} defaultValue={p.supplierId} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="label">Unit</label>
+                <input name="unit" defaultValue={p.unit ?? ""} className="input" />
+              </div>
+              <div>
+                <label className="label">Category</label>
+                <input name="category" defaultValue={p.category ?? ""} className="input" />
+              </div>
+            </div>
+            <div>
+              <label className="label">Par level (optional)</label>
+              <input name="parLevel" defaultValue={p.parLevel ?? ""} className="input" />
+            </div>
+            <button className="btn-primary w-full">Save changes</button>
+          </form>
+          <form action={deleteProduct} className="mt-2">
+            <input type="hidden" name="id" value={p.id} />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <button className="btn-ghost w-full text-danger hover:bg-danger/10">
+              <Icon name="trash" className="h-4 w-4" />
+              Delete product
+            </button>
+          </form>
+        </Popover>
       </div>
       {p.needed && (
         <QuantityInput
@@ -275,7 +281,7 @@ export default async function OrdersPage({
                     </form>
                   )}
                 </div>
-                <ul className="divide-y divide-border-soft">
+                <ul className="space-y-1.5">
                   {g.items.map((p) => (
                     <ProductRow
                       key={p.id}

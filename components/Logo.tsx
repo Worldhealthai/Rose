@@ -1,7 +1,4 @@
-/**
- * Rose Bar & Restaurant logo.
- * Swap the artwork by replacing /public/logo.svg (or point src at /logo.png).
- */
+/** Rose Bar & Restaurant logo. Source art: /public/logo.png */
 export function Logo({
   size = 40,
   className = "",
@@ -12,7 +9,7 @@ export function Logo({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/logo.svg"
+      src="/logo.png"
       alt="Rose Bar & Restaurant"
       width={size}
       height={size}
