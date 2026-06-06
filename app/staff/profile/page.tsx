@@ -6,6 +6,7 @@ import { PageHeader, Card, SectionTitle, DetailRow } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { AvatarUpload } from "@/components/AvatarUpload";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { updateMyContact, updateMyAvatar, changeMyPassword } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,9 @@ export default async function ProfilePage({
   searchParams: { ok?: string; error?: string };
 }) {
   const me = await requireStaff();
-  const t = getDict(getLocale()).profile;
+  const locale = getLocale();
+  const dict = getDict(locale);
+  const t = dict.profile;
 
   return (
     <div className="space-y-5">
@@ -63,6 +66,11 @@ export default async function ProfilePage({
         </div>
         <Icon name="chevronRight" className="h-5 w-5 text-ink-faint" />
       </Link>
+
+      <Card>
+        <SectionTitle>{dict.lang.label}</SectionTitle>
+        <LanguageSwitcher current={locale} />
+      </Card>
 
       <Card>
         <SectionTitle>{t.contactNumber}</SectionTitle>
