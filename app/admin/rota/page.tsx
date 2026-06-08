@@ -270,6 +270,7 @@ export default async function RotaPage({
     (c, s) => c + (s.employee ? shiftHours(s.start, s.end) * s.employee.hourlyRate : 0),
     0,
   );
+  const openShifts = shifts.filter((s) => !s.employeeId).length;
 
   return (
     <div className="space-y-5">
@@ -326,10 +327,27 @@ export default async function RotaPage({
         <StatCard
           label="Est. labour"
           value={money(totalLabour)}
+          sub={
+            openShifts > 0
+              ? `${openShifts} open shift${openShifts === 1 ? "" : "s"} uncosted`
+              : "assigned shifts"
+          }
           icon="cash"
           accent="#22d3ee"
         />
       </div>
+
+      {openShifts > 0 && (
+        <div className="card flex items-center gap-3 border-warning/30 bg-warning/10 p-3.5 text-sm text-ink-muted">
+          <Icon name="alert" className="h-5 w-5 shrink-0 text-warning" />
+          <span>
+            {openShifts} shift{openShifts === 1 ? " is" : "s are"} unassigned, so
+            {openShifts === 1 ? " it doesn't" : " they don't"} count towards Est.
+            labour. Tap a shift&apos;s pencil to assign someone (with an hourly
+            rate) and it&apos;ll cost up.
+          </span>
+        </div>
+      )}
 
       {employees.length === 0 && (
         <div className="card border-warning/30 bg-warning/10 p-4 text-sm text-ink">
