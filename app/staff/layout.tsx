@@ -2,6 +2,7 @@ import { requireStaff } from "@/lib/auth";
 import { getLocale } from "@/lib/locale";
 import { getDict, isRTL } from "@/lib/i18n";
 import { getUnreadChatCount } from "@/lib/chat";
+import { avatarUrl } from "@/lib/avatar";
 import { PortalShell, type NavItem } from "@/components/PortalShell";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function StaffLayout({
 
   return (
     <PortalShell
-      user={{ name: user.name, role: user.role, avatar: user.avatar }}
+      user={{ name: user.name, role: user.role, avatar: avatarUrl(user) }}
       subtitle={t.nav.staffPortal}
       items={NAV}
       mobileNav="tabs"

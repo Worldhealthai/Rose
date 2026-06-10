@@ -1,4 +1,5 @@
 import "server-only";
+import { cache as reactCache } from "react";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
@@ -74,8 +75,12 @@ export async function ensureBootstrapAdmin(): Promise<void> {
   }
 }
 
-/** Full Employee record for the logged-in user, or null. */
-export async function getCurrentUser() {
+/**
+ * Full Employee record for the logged-in user, or null.
+ * Wrapped in React cache() so the layout and page share one DB lookup per
+ * request instead of each doing their own.
+ */
+export const getCurrentUser = reactCache(async () => {
   const session = await getSession();
   if (!session) return null;
   const user = await prisma.employee.findUnique({
@@ -83,7 +88,7 @@ export async function getCurrentUser() {
   });
   if (!user || !user.active) return null;
   return user;
-}
+});
 
 /**
  * Like getCurrentUser, but never throws (returns null on DB hiccups).

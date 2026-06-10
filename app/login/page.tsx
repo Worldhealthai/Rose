@@ -6,6 +6,7 @@ import {
   getCurrentUserSafe,
 } from "@/lib/auth";
 import { getLocale } from "@/lib/locale";
+import { avatarUrl } from "@/lib/avatar";
 import { getDict, isRTL } from "@/lib/i18n";
 import { LoginPicker } from "@/components/LoginPicker";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -17,25 +18,30 @@ export default async function LoginPage() {
   // Only bounce to a portal if the session maps to a real, active account.
   // A stale cookie (deleted/deactivated user) falls through and shows the
   // login screen instead of redirect-looping; signing in replaces the cookie.
-  const me = await getCurrentUserSafe();
+  const [me, rows] = await Promise.all([
+    getCurrentUserSafe(),
+    prisma.employee
+      .findMany({
+        where: { active: true, role: "STAFF" },
+        orderBy: { name: "asc" },
+        select: { id: true, username: true, name: true, avatar: true, updatedAt: true },
+      })
+      .catch(() => []),
+  ]);
   if (me) redirect(landingPathFor(me.role === "ADMIN" ? "ADMIN" : "STAFF"));
 
   const locale = getLocale();
   const t = getDict(locale);
 
   // First run on a fresh database: make sure an admin account exists.
-  await ensureBootstrapAdmin();
+  // Only worth checking when there are no staff accounts yet.
+  if (rows.length === 0) await ensureBootstrapAdmin();
 
-  let staff: { username: string; name: string; avatar: string | null }[] = [];
-  try {
-    staff = await prisma.employee.findMany({
-      where: { active: true, role: "STAFF" },
-      orderBy: { name: "asc" },
-      select: { username: true, name: true, avatar: true },
-    });
-  } catch {
-    staff = [];
-  }
+  const staff = rows.map((r) => ({
+    username: r.username,
+    name: r.name,
+    avatar: avatarUrl(r),
+  }));
 
   return (
     <main

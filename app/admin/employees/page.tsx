@@ -4,6 +4,7 @@ import { PageHeader, Card, Badge } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { Avatar } from "@/components/Avatar";
+import { avatarUrl } from "@/lib/avatar";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { FormButton } from "@/components/FormButton";
 import {
@@ -22,7 +23,7 @@ function EmployeeCard({ e }: { e: Employee }) {
     <Card as="li" className="!p-0 overflow-hidden">
       <details className="group">
         <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
-          <Avatar name={e.name} src={e.avatar} size={44} />
+          <Avatar name={e.name} src={avatarUrl(e)} size={44} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="truncate font-semibold text-ink">{e.name}</p>

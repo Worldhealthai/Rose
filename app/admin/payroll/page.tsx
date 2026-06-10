@@ -17,6 +17,7 @@ import {
   localDayISO,
 } from "@/lib/dates";
 import { entryHours } from "@/lib/timeclock";
+import { avatarUrl } from "@/lib/avatar";
 import { PageHeader, Card, StatCard, SectionTitle } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
@@ -181,7 +182,7 @@ export default async function PayrollPage({
               return (
                 <Card as="li" key={e.id}>
                   <div className="flex items-center gap-3">
-                    <Avatar name={e.name} src={e.avatar} size={40} />
+                    <Avatar name={e.name} src={avatarUrl(e)} size={40} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-ink">{e.name}</p>
                       <p className="text-xs text-ink-faint">

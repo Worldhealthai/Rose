@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "./prisma";
 import { formatChatTime } from "./dates";
+import { avatarUrl } from "./avatar";
 import type { ChatMsg } from "@/components/ChatClient";
 
 /** Latest messages (oldest→newest), serialized for the chat UI. */
@@ -8,13 +9,13 @@ export async function getChatMessages(meId: string): Promise<ChatMsg[]> {
   const rows = await prisma.chatMessage.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
-    include: { author: { select: { avatar: true } } },
+    include: { author: { select: { id: true, avatar: true, updatedAt: true } } },
   });
   return rows.reverse().map((m) => ({
     id: m.id,
     body: m.body,
     authorName: m.authorName,
-    avatar: m.author?.avatar ?? null,
+    avatar: m.author ? avatarUrl(m.author) : null,
     mine: m.authorId === meId,
     time: formatChatTime(m.createdAt),
   }));
