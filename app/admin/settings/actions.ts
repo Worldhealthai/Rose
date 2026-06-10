@@ -7,7 +7,7 @@ import {
   requireAdmin,
   getCurrentUser,
   hashPassword,
-  verifyPassword,
+  passwordMatches,
 } from "@/lib/auth";
 import { COMMISSION_KEYS } from "@/lib/settings";
 
@@ -58,7 +58,7 @@ export async function changeMyPassword(formData: FormData) {
   if (next.length < 6) {
     redirect(`${BASE}?error=${encodeURIComponent("New password must be at least 6 characters.")}`);
   }
-  const ok = await verifyPassword(current, me.passwordHash);
+  const ok = await passwordMatches(current, me.passwordHash);
   if (!ok) {
     redirect(`${BASE}?error=${encodeURIComponent("Your current password is incorrect.")}`);
   }

@@ -30,10 +30,7 @@ export async function getDashboardData() {
     incomes,
     weekShifts,
     activeStaff,
-    suppliers,
-    productsNeeded,
-    tasksActive,
-    tasksDoneToday,
+    clockedInNow,
     rates,
     expenseAgg,
   ] = await Promise.all([
@@ -47,10 +44,7 @@ export async function getDashboardData() {
       orderBy: { start: "asc" },
     }),
     prisma.employee.count({ where: { active: true } }),
-    prisma.supplier.count(),
-    prisma.product.count({ where: { needed: true } }),
-    prisma.task.count({ where: { active: true } }),
-    prisma.taskCompletion.count({ where: { date: today } }),
+    prisma.timeEntry.count({ where: { clockOut: null } }),
     getCommissionRates(),
     prisma.expense.aggregate({
       _sum: { amount: true },
@@ -118,13 +112,7 @@ export async function getDashboardData() {
     weekLabour,
     weekLabourPct: pct(weekLabour, weekSum.total),
     todayShifts,
-    counts: {
-      activeStaff,
-      suppliers,
-      productsNeeded,
-      tasksTotal: tasksActive,
-      tasksOpen: Math.max(0, tasksActive - tasksDoneToday),
-    },
+    counts: { activeStaff, clockedInNow },
     bestDay: bestDay
       ? { date: bestDay.date, total: incomeTotal(bestDay) }
       : null,

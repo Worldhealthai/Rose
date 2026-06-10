@@ -1,7 +1,10 @@
 import { requireStaff } from "@/lib/auth";
 import { getLocale } from "@/lib/locale";
 import { getDict, isRTL } from "@/lib/i18n";
+import { getUnreadChatCount } from "@/lib/chat";
 import { PortalShell, type NavItem } from "@/components/PortalShell";
+
+export const dynamic = "force-dynamic";
 
 export default async function StaffLayout({
   children,
@@ -11,11 +14,11 @@ export default async function StaffLayout({
   const user = await requireStaff();
   const locale = getLocale();
   const t = getDict(locale);
+  const unreadChat = await getUnreadChatCount(user.id, user.chatLastReadAt);
 
   const NAV: NavItem[] = [
     { href: "/staff", label: t.nav.shifts, icon: "calendar", exact: true },
-    { href: "/staff/checklist", label: t.nav.tasks, icon: "clipboard" },
-    { href: "/staff/orders", label: t.nav.orders, icon: "cart" },
+    { href: "/staff/chat", label: t.nav.chat, icon: "message", badge: unreadChat },
     { href: "/staff/profile", label: t.nav.you, icon: "user" },
   ];
 

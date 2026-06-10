@@ -99,6 +99,30 @@ const shortFmt = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
+// Wall-clock formats in the restaurant's timezone (servers run in UTC).
+export const RESTAURANT_TZ = "Europe/London";
+const clockFmt = new Intl.DateTimeFormat("en-GB", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: RESTAURANT_TZ,
+});
+const chatTimeFmt = new Intl.DateTimeFormat("en-GB", {
+  weekday: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: RESTAURANT_TZ,
+});
+const londonDayFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: RESTAURANT_TZ,
+}); // yyyy-mm-dd
+
+/** "14:05" in restaurant local time. */
+export const formatClock = (d: Date) => clockFmt.format(d);
+/** "Mon 14:05" in restaurant local time. */
+export const formatChatTime = (d: Date) => chatTimeFmt.format(d);
+/** The restaurant-local calendar date (yyyy-mm-dd) a timestamp falls on. */
+export const localDayISO = (d: Date) => londonDayFmt.format(d);
+
 export const formatDay = (d: Date) => dayFmt.format(d);
 export const formatLongDay = (d: Date) => longDayFmt.format(d);
 export const formatMonth = (d: Date) => monthFmt.format(d);

@@ -25,19 +25,11 @@ function ensureConfigured(): boolean {
   return configured;
 }
 
-export type PushPayload = { title: string; body: string; url?: string };
+export type PushPayload = { title: string; body: string; url?: string; tag?: string };
 
-/** Send a push to every admin's subscribed device. Best-effort. */
-export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
-  if (!ensureConfigured()) return;
-  let subs;
-  try {
-    subs = await prisma.pushSubscription.findMany({
-      where: { employee: { role: "ADMIN" } },
-    });
-  } catch {
-    return;
-  }
+type Sub = { id: string; endpoint: string; p256dh: string; auth: string };
+
+async function deliver(subs: Sub[], payload: PushPayload): Promise<void> {
   const body = JSON.stringify(payload);
   await Promise.all(
     subs.map(async (s) => {
@@ -54,4 +46,46 @@ export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
       }
     }),
   );
+}
+
+/** Send a push to every admin's subscribed device. Best-effort. */
+export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
+  if (!ensureConfigured()) return;
+  let subs;
+  try {
+    subs = await prisma.pushSubscription.findMany({
+      where: { employee: { role: "ADMIN" } },
+    });
+  } catch {
+    return;
+  }
+  await deliver(subs, payload);
+}
+
+/**
+ * Push a chat message to everyone subscribed except the sender, linking each
+ * person to their own portal's chat page. Best-effort.
+ */
+export async function sendChatPush(
+  senderId: string,
+  senderName: string,
+  message: string,
+): Promise<void> {
+  if (!ensureConfigured()) return;
+  let subs;
+  try {
+    subs = await prisma.pushSubscription.findMany({
+      where: { NOT: { employeeId: senderId } },
+      include: { employee: { select: { role: true } } },
+    });
+  } catch {
+    return;
+  }
+  const text = message.length > 120 ? message.slice(0, 117) + "…" : message;
+  const admins = subs.filter((s) => s.employee?.role === "ADMIN");
+  const staff = subs.filter((s) => s.employee?.role !== "ADMIN");
+  await Promise.all([
+    deliver(admins, { title: senderName, body: text, url: "/admin/chat", tag: "rose-chat" }),
+    deliver(staff, { title: senderName, body: text, url: "/staff/chat", tag: "rose-chat" }),
+  ]);
 }

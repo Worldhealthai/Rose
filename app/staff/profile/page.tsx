@@ -7,6 +7,7 @@ import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { PushToggle } from "@/components/PushToggle";
 import { FormButton } from "@/components/FormButton";
 import { signOut } from "@/app/login/actions";
 import { updateMyContact, updateMyAvatar, changeMyPassword } from "./actions";
@@ -72,6 +73,12 @@ export default async function ProfilePage({
       <Card>
         <SectionTitle>{dict.lang.label}</SectionTitle>
         <LanguageSwitcher current={locale} />
+      </Card>
+
+      <Card>
+        <SectionTitle>{dict.chat.alertsTitle}</SectionTitle>
+        <p className="mb-3 text-sm text-ink-muted">{dict.chat.alertsHint}</p>
+        <PushToggle vapidKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY} />
       </Card>
 
       <Card>

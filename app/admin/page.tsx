@@ -55,10 +55,10 @@ export default async function AdminDashboard() {
           accent="#22d3ee"
         />
         <StatCard
-          label="To order"
-          value={d.counts.productsNeeded}
-          sub="items flagged"
-          icon="cart"
+          label="Clocked in"
+          value={d.counts.clockedInNow}
+          sub="right now"
+          icon="clock"
           accent="#f59e0b"
         />
       </div>
@@ -197,44 +197,6 @@ export default async function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Order reminder */}
-      {d.counts.productsNeeded > 0 && (
-        <Link href="/admin/orders" className="block">
-          <div className="card flex items-center gap-3 border-warning/30 bg-warning/10 p-4 transition hover:bg-warning/15">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-warning/20 text-warning">
-              <Icon name="cart" className="h-5 w-5" />
-            </span>
-            <div className="flex-1">
-              <p className="font-semibold text-ink">
-                {d.counts.productsNeeded} item
-                {d.counts.productsNeeded === 1 ? "" : "s"} to order
-              </p>
-              <p className="text-sm text-ink-muted">
-                Review your order list and contact suppliers.
-              </p>
-            </div>
-            <Icon name="chevronRight" className="h-5 w-5 text-ink-faint" />
-          </div>
-        </Link>
-      )}
-
-      {d.counts.tasksOpen > 0 && (
-        <Link href="/admin/checklist" className="block">
-          <div className="card flex items-center gap-3 p-4 transition hover:bg-elevated/50">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-forest-500/15 text-forest-300">
-              <Icon name="clipboard" className="h-5 w-5" />
-            </span>
-            <div className="flex-1">
-              <p className="font-semibold text-ink">
-                {d.counts.tasksOpen} task{d.counts.tasksOpen === 1 ? "" : "s"} left
-                today
-              </p>
-              <p className="text-sm text-ink-muted">Check the daily checklist.</p>
-            </div>
-            <Icon name="chevronRight" className="h-5 w-5 text-ink-faint" />
-          </div>
-        </Link>
-      )}
     </div>
   );
 }

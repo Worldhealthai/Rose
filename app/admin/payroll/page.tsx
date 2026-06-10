@@ -14,7 +14,9 @@ import {
   formatMonth,
   formatShort,
   formatDay,
+  localDayISO,
 } from "@/lib/dates";
+import { entryHours } from "@/lib/timeclock";
 import { PageHeader, Card, StatCard, SectionTitle } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
@@ -49,7 +51,7 @@ export default async function PayrollPage({
     label = `${formatShort(start)} – ${formatShort(end)}`;
   }
 
-  const [employees, shifts, payments] = await Promise.all([
+  const [employees, shifts, payments, timeEntries] = await Promise.all([
     prisma.employee.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
@@ -65,6 +67,9 @@ export default async function PayrollPage({
       },
       orderBy: { date: "desc" },
     }),
+    prisma.timeEntry.findMany({
+      where: { clockIn: { gte: addDays(start, -1), lt: addDays(end, 2) } },
+    }),
   ]);
 
   const hoursByEmp = new Map<string, number>();
@@ -72,16 +77,26 @@ export default async function PayrollPage({
     if (!s.employeeId) continue;
     hoursByEmp.set(s.employeeId, (hoursByEmp.get(s.employeeId) ?? 0) + shiftHours(s.start, s.end));
   }
+
+  // Actual clocked hours, attributed to the restaurant-local day they started.
+  const periodDays = new Set<string>();
+  for (let d = start; d <= end; d = addDays(d, 1)) periodDays.add(toISODate(d));
+  const workedByEmp = new Map<string, number>();
+  for (const e of timeEntries) {
+    if (!periodDays.has(localDayISO(e.clockIn))) continue;
+    workedByEmp.set(e.employeeId, (workedByEmp.get(e.employeeId) ?? 0) + entryHours(e));
+  }
   const payByEmp = new Map<string, typeof payments>();
   for (const p of payments) {
     if (!p.employeeId) continue;
     (payByEmp.get(p.employeeId) ?? payByEmp.set(p.employeeId, []).get(p.employeeId)!).push(p);
   }
 
-  const estTotal = employees.reduce(
-    (s, e) => s + (hoursByEmp.get(e.id) ?? 0) * e.hourlyRate,
-    0,
-  );
+  // Pay from clocked hours when someone has clocked in this period; otherwise
+  // fall back to their scheduled rota hours.
+  const payHours = (id: string) => workedByEmp.get(id) ?? hoursByEmp.get(id) ?? 0;
+  const estTotal = employees.reduce((s, e) => s + payHours(e.id) * e.hourlyRate, 0);
+  const totalWorked = [...workedByEmp.values()].reduce((a, b) => a + b, 0);
   const totalHours = [...hoursByEmp.values()].reduce((a, b) => a + b, 0);
   const paidThisMonthTotal = payments
     .filter((p) => p.date >= monthStart)
@@ -129,8 +144,19 @@ export default async function PayrollPage({
 
       {/* Totals */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Est. wage bill" value={money(estTotal)} sub={label} icon="wallet" />
-        <StatCard label="Hours" value={totalHours.toFixed(1)} icon="clock" accent="#34d399" />
+        <StatCard
+          label="Wage bill"
+          value={money(estTotal)}
+          sub="clocked, or rota if none"
+          icon="wallet"
+        />
+        <StatCard
+          label="Clocked hours"
+          value={totalWorked.toFixed(1)}
+          sub={`rota'd ${totalHours.toFixed(1)}h`}
+          icon="clock"
+          accent="#34d399"
+        />
         <StatCard label="Paid this month" value={money(paidThisMonthTotal)} icon="cash" accent="#22d3ee" />
       </div>
 
@@ -144,7 +170,9 @@ export default async function PayrollPage({
         ) : (
           <ul className="space-y-3">
             {employees.map((e) => {
-              const hours = hoursByEmp.get(e.id) ?? 0;
+              const scheduled = hoursByEmp.get(e.id) ?? 0;
+              const worked = workedByEmp.get(e.id) ?? 0;
+              const hours = payHours(e.id);
               const estimate = hours * e.hourlyRate;
               const history = payByEmp.get(e.id) ?? [];
               const paidThisMonth = history
@@ -162,7 +190,12 @@ export default async function PayrollPage({
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-ink">{money(estimate)}</p>
-                      <p className="text-[11px] text-ink-faint">{hours.toFixed(1)}h this {view}</p>
+                      <p className="text-[11px] text-ink-faint">
+                        {worked > 0
+                          ? `clocked ${worked.toFixed(1)}h`
+                          : `rota ${scheduled.toFixed(1)}h`}{" "}
+                        this {view}
+                      </p>
                     </div>
                   </div>
 

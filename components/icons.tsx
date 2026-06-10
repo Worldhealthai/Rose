@@ -32,7 +32,8 @@ export type IconName =
   | "wallet"
   | "sun"
   | "thermometer"
-  | "bell";
+  | "bell"
+  | "message";
 
 const PATHS: Record<IconName, JSX.Element> = {
   dashboard: (
@@ -190,6 +191,12 @@ const PATHS: Record<IconName, JSX.Element> = {
     <>
       <path d="M6 9a6 6 0 1 1 12 0c0 4.5 1.8 5.8 1.8 5.8H4.2S6 13.5 6 9z" />
       <path d="M9.5 19a2.5 2.5 0 0 0 5 0" />
+    </>
+  ),
+  message: (
+    <>
+      <path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z" />
+      <path d="M8 10.5h8M8 13.5h5" />
     </>
   ),
 };

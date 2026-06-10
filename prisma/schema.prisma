@@ -30,12 +30,41 @@ model Employee {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
+  chatLastReadAt DateTime? // last time this user opened the team chat
+
   shifts            Shift[]
   availability      Availability[]
   assignedTasks     Task[]             @relation("AssignedTasks")
   timeOff           TimeOff[]          @relation("TimeOff")
   expenses          Expense[]
   pushSubscriptions PushSubscription[]
+  timeEntries       TimeEntry[]
+  chatMessages      ChatMessage[]
+}
+
+/// A clock-in/clock-out record — actual hours worked.
+model TimeEntry {
+  id         String    @id @default(cuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  clockIn    DateTime
+  clockOut   DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([employeeId, clockIn])
+  @@index([clockIn])
+}
+
+/// A message in the single team group chat.
+model ChatMessage {
+  id         String    @id @default(cuid())
+  body       String
+  authorId   String?
+  author     Employee? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName String
+  createdAt  DateTime  @default(now())
+
+  @@index([createdAt])
 }
 
 /// A scheduled shift. employeeId null = open/unassigned slot.

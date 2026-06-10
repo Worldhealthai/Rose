@@ -238,7 +238,14 @@ export function PortalShell({
                   active ? "text-forest-300" : "text-ink-faint"
                 }`}
               >
-                <Icon name={item.icon} className="h-[22px] w-[22px]" />
+                <span className="relative">
+                  <Icon name={item.icon} className="h-[22px] w-[22px]" />
+                  {item.badge ? (
+                    <span className="absolute -right-2.5 -top-1.5">
+                      <Badge count={item.badge} />
+                    </span>
+                  ) : null}
+                </span>
                 {item.label}
               </Link>
             );

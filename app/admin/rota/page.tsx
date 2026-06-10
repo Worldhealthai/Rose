@@ -10,8 +10,11 @@ import {
   addDays,
   toISODate,
   formatShort,
+  formatClock,
+  localDayISO,
   WEEKDAYS,
 } from "@/lib/dates";
+import { entryHours, fmtHours } from "@/lib/timeclock";
 import { PageHeader, Card, StatCard, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Popover } from "@/components/Popover";
@@ -29,6 +32,12 @@ type PrefLite = {
   start: string | null;
   end: string | null;
   note: string | null;
+};
+type ClockedLite = {
+  name: string;
+  in: string;
+  out: string | null;
+  hours: number;
 };
 
 function EmployeeSelect({
@@ -57,6 +66,7 @@ function DayCard({
   employees,
   prefs,
   off,
+  clocked,
   weekISO,
   isToday,
 }: {
@@ -65,6 +75,7 @@ function DayCard({
   employees: EmployeeLite[];
   prefs: PrefLite[];
   off: string[];
+  clocked: ClockedLite[];
   weekISO: string;
   isToday: boolean;
 }) {
@@ -154,6 +165,24 @@ function DayCard({
         </ul>
       )}
 
+      {clocked.length > 0 && (
+        <div className="mt-2 rounded-xl bg-forest-500/[0.07] p-2.5 ring-1 ring-inset ring-forest-500/20">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-forest-300">
+            Clocked (actual)
+          </p>
+          <ul className="space-y-0.5">
+            {clocked.map((c, i) => (
+              <li key={i} className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-ink">{c.name}</span>
+                <span className="text-ink-muted">
+                  {c.in}–{c.out ?? "now"} · {fmtHours(c.hours)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {prefs.length > 0 && (
         <div className="mt-2 rounded-xl bg-canvas/40 p-2.5">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
@@ -212,7 +241,7 @@ export default async function RotaPage({
   const weekEnd = days[6];
   const weekISO = toISODate(weekStart);
 
-  const [shifts, employees, avail, timeOff] = await Promise.all([
+  const [shifts, employees, avail, timeOff, timeEntries] = await Promise.all([
     prisma.shift.findMany({
       where: { date: { gte: weekStart, lte: weekEnd } },
       include: { employee: true },
@@ -235,7 +264,28 @@ export default async function RotaPage({
       },
       include: { employee: true },
     }),
+    prisma.timeEntry.findMany({
+      where: {
+        clockIn: { gte: addDays(weekStart, -1), lt: addDays(weekEnd, 2) },
+      },
+      include: { employee: { select: { name: true } } },
+      orderBy: { clockIn: "asc" },
+    }),
   ]);
+
+  // Actual clock-ins, grouped by the restaurant-local day they started on.
+  const clockedByDay = new Map<string, ClockedLite[]>();
+  for (const e of timeEntries) {
+    const k = localDayISO(e.clockIn);
+    const list = clockedByDay.get(k) ?? [];
+    list.push({
+      name: e.employee.name,
+      in: formatClock(e.clockIn),
+      out: e.clockOut ? formatClock(e.clockOut) : null,
+      hours: entryHours(e),
+    });
+    clockedByDay.set(k, list);
+  }
 
   // Staff preferences for this week, grouped by weekday (0 = Mon ... 6 = Sun)
   const prefsByDay = new Map<number, PrefLite[]>();
@@ -368,6 +418,7 @@ export default async function RotaPage({
             employees={employees}
             prefs={prefsByDay.get(i) ?? []}
             off={offByDay.get(i) ?? []}
+            clocked={clockedByDay.get(toISODate(day)) ?? []}
             weekISO={weekISO}
             isToday={toISODate(day) === toISODate(today)}
           />

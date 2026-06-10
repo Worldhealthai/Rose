@@ -4,8 +4,34 @@ import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { getSession, type SessionUser } from "./session";
 
+/**
+ * Normalise a typed password: trim stray spaces and fold Persian (۰-۹) and
+ * Arabic (٠-٩) digits to ASCII, so a Persian keyboard typing "1234" still
+ * matches a password stored with Latin digits.
+ */
+export function normalizePassword(plain: string): string {
+  const fold = (ch: string) => {
+    const c = ch.codePointAt(0)!;
+    if (c >= 0x06f0 && c <= 0x06f9) return String(c - 0x06f0); // ۰-۹
+    if (c >= 0x0660 && c <= 0x0669) return String(c - 0x0660); // ٠-٩
+    return ch;
+  };
+  return [...plain.trim()].map(fold).join("");
+}
+
 export async function hashPassword(plain: string): Promise<string> {
-  return bcrypt.hash(plain, 10);
+  return bcrypt.hash(normalizePassword(plain), 10);
+}
+
+/** Check a typed password against a hash, tolerating spaces/Persian digits. */
+export async function passwordMatches(
+  typed: string,
+  hash: string,
+): Promise<boolean> {
+  if (await bcrypt.compare(typed, hash)) return true;
+  const normalized = normalizePassword(typed);
+  if (normalized !== typed) return bcrypt.compare(normalized, hash);
+  return false;
 }
 
 /** Usernames are case-insensitive and have no spaces. */
@@ -23,13 +49,6 @@ export function cleanAvatar(value: FormDataEntryValue | null): string | null {
   if (!v.startsWith("data:image/")) return null;
   if (v.length > 900_000) return null; // ~700KB image; resized client-side
   return v;
-}
-
-export async function verifyPassword(
-  plain: string,
-  hash: string,
-): Promise<boolean> {
-  return bcrypt.compare(plain, hash);
 }
 
 /**

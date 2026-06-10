@@ -7,7 +7,7 @@ import {
   requireStaff,
   getCurrentUser,
   hashPassword,
-  verifyPassword,
+  passwordMatches,
   cleanAvatar,
 } from "@/lib/auth";
 
@@ -47,7 +47,7 @@ export async function changeMyPassword(formData: FormData) {
   if (next.length < 6) {
     redirect(`${BASE}?error=${encodeURIComponent("New password must be at least 6 characters.")}`);
   }
-  if (!(await verifyPassword(current, me.passwordHash))) {
+  if (!(await passwordMatches(current, me.passwordHash))) {
     redirect(`${BASE}?error=${encodeURIComponent("Your current password is incorrect.")}`);
   }
   await prisma.employee.update({
