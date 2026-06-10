@@ -118,6 +118,24 @@ const londonDayFmt = new Intl.DateTimeFormat("en-CA", {
 
 /** "14:05" in restaurant local time. */
 export const formatClock = (d: Date) => clockFmt.format(d);
+
+/**
+ * Convert a restaurant-local wall time ("yyyy-mm-dd" + "HH:mm") to a real
+ * timestamp, accounting for UK summer time. (Times inside the one-hour DST
+ * switch may be off by an hour — fine for shift records.)
+ */
+export function localTimeToDate(dayISO: string, hhmm: string): Date {
+  const naive = new Date(`${dayISO}T${hhmm}:00Z`);
+  const offsetName = new Intl.DateTimeFormat("en-GB", {
+    timeZone: RESTAURANT_TZ,
+    timeZoneName: "longOffset",
+  })
+    .formatToParts(naive)
+    .find((p) => p.type === "timeZoneName")?.value; // "GMT" or "GMT+01:00"
+  const m = /GMT([+-])(\d{2}):(\d{2})/.exec(offsetName ?? "");
+  const offsetMin = m ? (m[1] === "+" ? 1 : -1) * (+m[2] * 60 + +m[3]) : 0;
+  return new Date(naive.getTime() - offsetMin * 60_000);
+}
 /** "Mon 14:05" in restaurant local time. */
 export const formatChatTime = (d: Date) => chatTimeFmt.format(d);
 /** The restaurant-local calendar date (yyyy-mm-dd) a timestamp falls on. */

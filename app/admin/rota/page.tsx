@@ -19,7 +19,15 @@ import { PageHeader, Card, StatCard, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Popover } from "@/components/Popover";
 import { FormButton } from "@/components/FormButton";
-import { createShift, updateShift, deleteShift, copyLastWeek } from "./actions";
+import {
+  createShift,
+  updateShift,
+  deleteShift,
+  copyLastWeek,
+  addTimeEntry,
+  updateTimeEntry,
+  deleteTimeEntry,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +42,7 @@ type PrefLite = {
   note: string | null;
 };
 type ClockedLite = {
+  id: string;
   name: string;
   in: string;
   out: string | null;
@@ -165,21 +174,97 @@ function DayCard({
         </ul>
       )}
 
-      {clocked.length > 0 && (
+      {(clocked.length > 0 || employees.length > 0) && (
         <div className="mt-2 rounded-xl bg-forest-500/[0.07] p-2.5 ring-1 ring-inset ring-forest-500/20">
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-forest-300">
-            Clocked (actual)
-          </p>
-          <ul className="space-y-0.5">
-            {clocked.map((c, i) => (
-              <li key={i} className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-ink">{c.name}</span>
-                <span className="text-ink-muted">
-                  {c.in}–{c.out ?? "now"} · {fmtHours(c.hours)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-forest-300">
+              Clocked (actual)
+            </p>
+            <Popover
+              title={`Add clock entry · ${formatShort(day)}`}
+              triggerIcon="plus"
+              triggerClassName="grid h-6 w-6 place-items-center rounded-md text-forest-300 hover:bg-forest-500/15"
+            >
+              <form action={addTimeEntry} className="space-y-3">
+                <input type="hidden" name="date" value={dayISO} />
+                <input type="hidden" name="week" value={weekISO} />
+                <div>
+                  <label className="label">Who</label>
+                  <select name="employeeId" className="input" required defaultValue="">
+                    <option value="" disabled>
+                      Choose…
+                    </option>
+                    {employees.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="label">Clock in</label>
+                    <input name="in" type="time" className="input" required />
+                  </div>
+                  <div>
+                    <label className="label">Clock out</label>
+                    <input name="out" type="time" className="input" />
+                  </div>
+                </div>
+                <p className="text-xs text-ink-faint">
+                  Leave clock out empty if they&apos;re still working. An end time
+                  earlier than the start rolls to the next day.
+                </p>
+                <FormButton className="btn-primary w-full">Add entry</FormButton>
+              </form>
+            </Popover>
+          </div>
+          {clocked.length === 0 ? (
+            <p className="text-xs text-ink-faint">No clock-ins.</p>
+          ) : (
+            <ul className="space-y-0.5">
+              {clocked.map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="text-ink">{c.name}</span>
+                  <span className="flex items-center gap-1.5 text-ink-muted">
+                    {c.in}–{c.out ?? "now"} · {fmtHours(c.hours)}
+                    <Popover
+                      title={`Edit clock entry · ${c.name}`}
+                      triggerClassName="grid h-6 w-6 place-items-center rounded-md text-ink-faint hover:bg-elevated hover:text-ink"
+                    >
+                      <form action={updateTimeEntry} className="space-y-3">
+                        <input type="hidden" name="id" value={c.id} />
+                        <input type="hidden" name="date" value={dayISO} />
+                        <input type="hidden" name="week" value={weekISO} />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="label">Clock in</label>
+                            <input name="in" type="time" defaultValue={c.in} className="input" required />
+                          </div>
+                          <div>
+                            <label className="label">Clock out</label>
+                            <input name="out" type="time" defaultValue={c.out ?? ""} className="input" />
+                          </div>
+                        </div>
+                        <p className="text-xs text-ink-faint">
+                          Leave clock out empty to keep them checked in.
+                        </p>
+                        <FormButton className="btn-primary w-full">Save times</FormButton>
+                      </form>
+                      <form action={deleteTimeEntry} className="mt-2">
+                        <input type="hidden" name="id" value={c.id} />
+                        <input type="hidden" name="week" value={weekISO} />
+                        <FormButton className="btn-ghost w-full text-danger hover:bg-danger/10">
+                          <Icon name="trash" className="h-4 w-4" />
+                          Delete entry
+                        </FormButton>
+                      </form>
+                    </Popover>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
@@ -279,6 +364,7 @@ export default async function RotaPage({
     const k = localDayISO(e.clockIn);
     const list = clockedByDay.get(k) ?? [];
     list.push({
+      id: e.id,
       name: e.employee.name,
       in: formatClock(e.clockIn),
       out: e.clockOut ? formatClock(e.clockOut) : null,

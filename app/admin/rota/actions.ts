@@ -4,7 +4,13 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { parseDay, startOfWeek, addDays, toISODate } from "@/lib/dates";
+import {
+  parseDay,
+  startOfWeek,
+  addDays,
+  toISODate,
+  localTimeToDate,
+} from "@/lib/dates";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -57,6 +63,74 @@ export async function updateShift(formData: FormData) {
   });
   refresh();
   weekRedirect(formData, updated.date);
+}
+
+function refreshClock() {
+  revalidatePath("/admin/rota");
+  revalidatePath("/admin");
+  revalidatePath("/admin/payroll");
+  revalidatePath("/staff");
+}
+
+/** Resolve a day + "HH:mm" in/out pair to timestamps (overnight rolls to next day). */
+function clockTimes(dayISO: string, inHHMM: string, outHHMM: string) {
+  const clockIn = localTimeToDate(dayISO, inHHMM);
+  let clockOut: Date | null = null;
+  if (outHHMM) {
+    clockOut = localTimeToDate(dayISO, outHHMM);
+    if (clockOut <= clockIn) clockOut = new Date(clockOut.getTime() + 86_400_000);
+  }
+  return { clockIn, clockOut };
+}
+
+const HHMM = /^\d{2}:\d{2}$/;
+
+/** Manually add a clock entry (e.g. someone forgot to check in). */
+export async function addTimeEntry(formData: FormData) {
+  await requireAdmin();
+  const employeeId = str(formData, "employeeId");
+  const dayISO = str(formData, "date");
+  const inHHMM = str(formData, "in");
+  const outHHMM = str(formData, "out");
+  if (employeeId && /^\d{4}-\d{2}-\d{2}$/.test(dayISO) && HHMM.test(inHHMM)) {
+    const { clockIn, clockOut } = clockTimes(
+      dayISO,
+      inHHMM,
+      HHMM.test(outHHMM) ? outHHMM : "",
+    );
+    await prisma.timeEntry.create({
+      data: { employeeId, clockIn, clockOut },
+    });
+  }
+  refreshClock();
+  weekRedirect(formData, parseDay(dayISO));
+}
+
+/** Edit a clock entry's in/out times. Leave "out" empty to keep it open. */
+export async function updateTimeEntry(formData: FormData) {
+  await requireAdmin();
+  const id = str(formData, "id");
+  const dayISO = str(formData, "date");
+  const inHHMM = str(formData, "in");
+  const outHHMM = str(formData, "out");
+  if (id && /^\d{4}-\d{2}-\d{2}$/.test(dayISO) && HHMM.test(inHHMM)) {
+    const { clockIn, clockOut } = clockTimes(
+      dayISO,
+      inHHMM,
+      HHMM.test(outHHMM) ? outHHMM : "",
+    );
+    await prisma.timeEntry.update({ where: { id }, data: { clockIn, clockOut } });
+  }
+  refreshClock();
+  weekRedirect(formData, parseDay(dayISO));
+}
+
+export async function deleteTimeEntry(formData: FormData) {
+  await requireAdmin();
+  const id = str(formData, "id");
+  if (id) await prisma.timeEntry.delete({ where: { id } });
+  refreshClock();
+  weekRedirect(formData, new Date());
 }
 
 /** Duplicate last week's shifts into the week being viewed. */
