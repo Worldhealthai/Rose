@@ -66,6 +66,18 @@ export async function getCurrentUser() {
   return user;
 }
 
+/**
+ * Like getCurrentUser, but never throws (returns null on DB hiccups).
+ * Use on pages that must render rather than crash or redirect-loop.
+ */
+export async function getCurrentUserSafe() {
+  try {
+    return await getCurrentUser();
+  } catch {
+    return null;
+  }
+}
+
 /** Require any logged-in user. Redirects to /login if not signed in. */
 export async function requireUser() {
   const user = await getCurrentUser();

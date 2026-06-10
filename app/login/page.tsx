@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
-import { landingPathFor, ensureBootstrapAdmin } from "@/lib/auth";
+import {
+  landingPathFor,
+  ensureBootstrapAdmin,
+  getCurrentUserSafe,
+} from "@/lib/auth";
 import { getLocale } from "@/lib/locale";
 import { getDict, isRTL } from "@/lib/i18n";
 import { LoginPicker } from "@/components/LoginPicker";
@@ -11,8 +14,11 @@ import { Logo } from "@/components/Logo";
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  const session = await getSession();
-  if (session) redirect(landingPathFor(session.role));
+  // Only bounce to a portal if the session maps to a real, active account.
+  // A stale cookie (deleted/deactivated user) falls through and shows the
+  // login screen instead of redirect-looping; signing in replaces the cookie.
+  const me = await getCurrentUserSafe();
+  if (me) redirect(landingPathFor(me.role === "ADMIN" ? "ADMIN" : "STAFF"));
 
   const locale = getLocale();
   const t = getDict(locale);

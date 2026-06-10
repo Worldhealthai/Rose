@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
-import { landingPathFor } from "@/lib/auth";
+import { getCurrentUserSafe, landingPathFor } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  redirect(landingPathFor(session.role));
+  // Validate the session against the database (not just the cookie), so a
+  // stale cookie for a deleted/deactivated account can't redirect-loop.
+  const user = await getCurrentUserSafe();
+  if (!user) redirect("/login");
+  redirect(landingPathFor(user.role === "ADMIN" ? "ADMIN" : "STAFF"));
 }
