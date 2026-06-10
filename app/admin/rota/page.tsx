@@ -157,15 +157,17 @@ function DayCard({
                       <label className="label">Role (optional)</label>
                       <input name="role" defaultValue={s.role ?? ""} className="input" />
                     </div>
-                    <button className="btn-primary w-full">Save changes</button>
+                    <FormButton className="btn-primary w-full" savedLabel="Updated ✓">
+                      Save changes
+                    </FormButton>
                   </form>
                   <form action={deleteShift} className="mt-2">
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="week" value={weekISO} />
-                    <button className="btn-ghost w-full text-danger hover:bg-danger/10">
+                    <FormButton className="btn-ghost w-full text-danger hover:bg-danger/10">
                       <Icon name="trash" className="h-4 w-4" />
                       Delete shift
-                    </button>
+                    </FormButton>
                   </form>
                 </Popover>
               </div>
@@ -215,7 +217,9 @@ function DayCard({
                   Leave clock out empty if they&apos;re still working. An end time
                   earlier than the start rolls to the next day.
                 </p>
-                <FormButton className="btn-primary w-full">Add entry</FormButton>
+                <FormButton className="btn-primary w-full" savedLabel="Added ✓">
+                  Add entry
+                </FormButton>
               </form>
             </Popover>
           </div>
@@ -249,7 +253,9 @@ function DayCard({
                         <p className="text-xs text-ink-faint">
                           Leave clock out empty to keep them checked in.
                         </p>
-                        <FormButton className="btn-primary w-full">Save times</FormButton>
+                        <FormButton className="btn-primary w-full" savedLabel="Updated ✓">
+                          Save times
+                        </FormButton>
                       </form>
                       <form action={deleteTimeEntry} className="mt-2">
                         <input type="hidden" name="id" value={c.id} />
@@ -301,7 +307,9 @@ function DayCard({
             <input name="end" type="time" defaultValue="17:00" className="input" />
           </div>
           <input name="role" placeholder="Role (optional)" className="input" />
-          <FormButton className="btn-secondary w-full">Add shift</FormButton>
+          <FormButton className="btn-secondary w-full" savedLabel="Added ✓">
+            Add shift
+          </FormButton>
         </form>
       </details>
 
@@ -444,7 +452,7 @@ export default async function RotaPage({
       <div className="flex justify-center">
         <form action={copyLastWeek}>
           <input type="hidden" name="week" value={weekISO} />
-          <FormButton className="btn-ghost text-sm">
+          <FormButton className="btn-ghost text-sm" savedLabel="Copied ✓">
             <Icon name="calendar" className="h-4 w-4" />
             Copy last week&apos;s shifts
           </FormButton>

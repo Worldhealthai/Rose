@@ -34,7 +34,9 @@ const en = {
     notCheckedIn: "You're not checked in",
     workedToday: "Today",
     workedWeek: "This week",
-    worked: "worked",
+    todayLog: "Today's log",
+    now: "now",
+    noEntries: "No check-ins yet today.",
   },
   chat: {
     title: "Team chat",
@@ -208,7 +210,9 @@ const fa: Dict = {
     notCheckedIn: "هنوز ورود نزده‌اید",
     workedToday: "امروز",
     workedWeek: "این هفته",
-    worked: "کارکرد",
+    todayLog: "ثبت‌های امروز",
+    now: "اکنون",
+    noEntries: "امروز هنوز ورودی ثبت نشده است.",
   },
   chat: {
     title: "گفتگوی تیم",

@@ -34,8 +34,11 @@ export function ChatClient({
     mounted.current = false;
   }, []);
 
-  // Poll for new messages while the chat is open.
+  // Refresh once on open — the page render just marked the chat as read, and
+  // this re-renders the layout so the unread badge in the nav clears straight
+  // away. Then keep polling for new messages while the chat is open.
   useEffect(() => {
+    router.refresh();
     const id = setInterval(() => router.refresh(), 12000);
     return () => clearInterval(id);
   }, [router]);
