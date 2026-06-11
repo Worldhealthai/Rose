@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { getLocale } from "@/lib/locale";
 import { getDict } from "@/lib/i18n";
-import { shiftHours } from "@/lib/calc";
+import { shiftHours, elapsedShiftHours } from "@/lib/calc";
 import {
   today as todayFn,
   weekDays,
@@ -80,6 +80,17 @@ export default async function StaffHome() {
   const showPay = me.hourlyRate > 0;
   const hoursLine = (h: number) =>
     showPay ? `${fmtHours(h)} · ${money(h * me.hourlyRate)}` : fmtHours(h);
+
+  // Earned so far this week, from the rota: past days count in full, today's
+  // shifts count the part that's already happened (restaurant local time).
+  const nowHHMM = formatClock(now);
+  const rotaHoursSoFar = weekShifts.reduce((h, s) => {
+    const dayISO = toISODate(s.date);
+    if (dayISO > todayISO) return h;
+    if (dayISO < todayISO) return h + shiftHours(s.start, s.end);
+    return h + elapsedShiftHours(s.start, s.end, nowHHMM);
+  }, 0);
+  const rotaEarnedSoFar = rotaHoursSoFar * me.hourlyRate;
 
   const groups: { iso: string; date: Date; shifts: Shift[] }[] = [];
   for (const s of upcoming) {
@@ -211,7 +222,12 @@ export default async function StaffHome() {
       )}
 
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label={t.thisWeek} value={`${weekHours.toFixed(1)}h`} icon="clock" />
+        <StatCard
+          label={t.thisWeek}
+          value={`${weekHours.toFixed(1)}h`}
+          sub={showPay ? `${money(rotaEarnedSoFar)} ${t.earnedSoFar}` : undefined}
+          icon="clock"
+        />
         <StatCard
           label={t.thisMonth}
           value={`${monthHours.toFixed(1)}h`}
