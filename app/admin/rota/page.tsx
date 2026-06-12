@@ -410,6 +410,13 @@ export default async function RotaPage({
   }
 
   const totalHours = shifts.reduce((h, s) => h + shiftHours(s.start, s.end), 0);
+  // Actual clocked hours falling inside this week (open entries count to now).
+  const clockedHours = days.reduce(
+    (h, day) =>
+      h +
+      (clockedByDay.get(toISODate(day)) ?? []).reduce((x, c) => x + c.hours, 0),
+    0,
+  );
   const totalLabour = shifts.reduce(
     (c, s) => c + (s.employee ? shiftHours(s.start, s.end) * s.employee.hourlyRate : 0),
     0,
@@ -465,6 +472,7 @@ export default async function RotaPage({
         <StatCard
           label="Hours"
           value={totalHours.toFixed(1)}
+          sub={`rota'd · ${fmtHours(clockedHours)} clocked`}
           icon="clock"
           accent="#34d399"
         />
