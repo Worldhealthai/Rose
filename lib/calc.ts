@@ -10,6 +10,25 @@ export function shiftHours(start: string, end: string): number {
   return Math.round((mins / 60) * 100) / 100;
 }
 
+/**
+ * Hours of a same-day shift that have already happened by `now` ("HH:mm").
+ * 0 before the shift starts, the full length once it has ended; overnight
+ * shifts count up until midnight's wrap (end < start rolls to the next day).
+ */
+export function elapsedShiftHours(start: string, end: string, now: string): number {
+  const toMins = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return Number.isNaN(h) || Number.isNaN(m) ? NaN : h * 60 + m;
+  };
+  const s = toMins(start);
+  const n = toMins(now);
+  let e = toMins(end);
+  if ([s, e, n].some(Number.isNaN)) return 0;
+  if (e <= s) e += 24 * 60; // crossed midnight
+  const mins = Math.max(0, Math.min(n, e) - s);
+  return Math.round((mins / 60) * 100) / 100;
+}
+
 export type IncomeLike = {
   zReport: number;
   justEat: number;

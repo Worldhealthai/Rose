@@ -124,7 +124,7 @@ function EmployeeCard({ e }: { e: Employee }) {
               />
               Active (can sign in &amp; be rota&apos;d)
             </label>
-            <button className="btn-primary">Save changes</button>
+            <FormButton className="btn-primary">Save changes</FormButton>
           </form>
 
           <div className="flex flex-wrap items-end gap-3 border-t border-border-soft pt-4">
@@ -140,7 +140,7 @@ function EmployeeCard({ e }: { e: Employee }) {
                   minLength={6}
                 />
               </div>
-              <button className="btn-secondary">Set</button>
+              <FormButton className="btn-secondary">Set</FormButton>
             </form>
             <form action={deleteEmployee} className="ml-auto">
               <input type="hidden" name="id" value={e.id} />

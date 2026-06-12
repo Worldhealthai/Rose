@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { getLocale } from "@/lib/locale";
 import { getDict } from "@/lib/i18n";
-import { shiftHours } from "@/lib/calc";
+import { shiftHours, elapsedShiftHours } from "@/lib/calc";
 import {
   today as todayFn,
   weekDays,
@@ -15,7 +15,8 @@ import {
   formatClock,
   localDayISO,
 } from "@/lib/dates";
-import { sumEntryHours, fmtHours } from "@/lib/timeclock";
+import { entryHours, sumEntryHours, fmtHours } from "@/lib/timeclock";
+import { money } from "@/lib/money";
 import { Card, StatCard, SectionTitle, EmptyState, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { RefreshButton } from "@/components/forms";
@@ -67,14 +68,29 @@ export default async function StaffHome() {
   const now = new Date();
   const openEntry = weekEntries.find((e) => !e.clockOut) ?? null;
   const todayISO = localDayISO(now);
-  const workedToday = sumEntryHours(
-    weekEntries.filter((e) => localDayISO(e.clockIn) === todayISO),
-    now,
+  const todayEntries = weekEntries.filter(
+    (e) => localDayISO(e.clockIn) === todayISO,
   );
+  const workedToday = sumEntryHours(todayEntries, now);
   const workedWeek = sumEntryHours(
     weekEntries.filter((e) => e.clockIn >= week[0]),
     now,
   );
+  // What those hours are worth (hidden if no hourly rate is set).
+  const showPay = me.hourlyRate > 0;
+  const hoursLine = (h: number) =>
+    showPay ? `${fmtHours(h)} · ${money(h * me.hourlyRate)}` : fmtHours(h);
+
+  // Earned so far this week, from the rota: past days count in full, today's
+  // shifts count the part that's already happened (restaurant local time).
+  const nowHHMM = formatClock(now);
+  const rotaHoursSoFar = weekShifts.reduce((h, s) => {
+    const dayISO = toISODate(s.date);
+    if (dayISO > todayISO) return h;
+    if (dayISO < todayISO) return h + shiftHours(s.start, s.end);
+    return h + elapsedShiftHours(s.start, s.end, nowHHMM);
+  }, 0);
+  const rotaEarnedSoFar = rotaHoursSoFar * me.hourlyRate;
 
   const groups: { iso: string; date: Date; shifts: Shift[] }[] = [];
   for (const s of upcoming) {
@@ -108,19 +124,13 @@ export default async function StaffHome() {
           <div className="flex items-center justify-between gap-3">
             <div>
               {openEntry ? (
-                <>
-                  <p className="flex items-center gap-2 font-semibold text-ink">
-                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-forest-400" />
-                    {tc.checkedInSince} {formatClock(openEntry.clockIn)}
-                  </p>
-                </>
+                <p className="flex items-center gap-2 font-semibold text-ink">
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-forest-400" />
+                  {tc.checkedInSince} {formatClock(openEntry.clockIn)}
+                </p>
               ) : (
                 <p className="font-medium text-ink-muted">{tc.notCheckedIn}</p>
               )}
-              <p className="mt-1 text-xs text-ink-faint">
-                {tc.workedToday}: {fmtHours(workedToday)} · {tc.workedWeek}:{" "}
-                {fmtHours(workedWeek)} {tc.worked}
-              </p>
             </div>
             {openEntry ? (
               <RefreshButton
@@ -143,6 +153,45 @@ export default async function StaffHome() {
                 {tc.checkIn}
               </RefreshButton>
             )}
+          </div>
+
+          {/* What's been logged today, and what it's worth */}
+          <div className="rounded-xl bg-canvas/40 p-3">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+              {tc.todayLog}
+            </p>
+            {todayEntries.length === 0 ? (
+              <p className="text-xs text-ink-faint">{tc.noEntries}</p>
+            ) : (
+              <ul className="space-y-1">
+                {todayEntries.map((e) => (
+                  <li
+                    key={e.id}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span className="text-ink">
+                      {formatClock(e.clockIn)}–
+                      {e.clockOut ? formatClock(e.clockOut) : tc.now}
+                    </span>
+                    <span className="text-ink-muted">
+                      {hoursLine(entryHours(e, now))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-2 space-y-1 border-t border-border-soft pt-2">
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="font-medium text-ink">{tc.workedToday}</span>
+                <span className="font-semibold text-forest-200">
+                  {hoursLine(workedToday)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2 text-xs text-ink-muted">
+                <span>{tc.workedWeek}</span>
+                <span>{hoursLine(workedWeek)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -173,7 +222,12 @@ export default async function StaffHome() {
       )}
 
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label={t.thisWeek} value={`${weekHours.toFixed(1)}h`} icon="clock" />
+        <StatCard
+          label={t.thisWeek}
+          value={`${weekHours.toFixed(1)}h`}
+          sub={showPay ? `${money(rotaEarnedSoFar)} ${t.earnedSoFar}` : undefined}
+          icon="clock"
+        />
         <StatCard
           label={t.thisMonth}
           value={`${monthHours.toFixed(1)}h`}
