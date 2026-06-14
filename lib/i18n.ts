@@ -17,6 +17,7 @@ const en = {
   lang: { label: "Language", english: "English", persian: "فارسی" },
   nav: {
     shifts: "Shifts",
+    rota: "Rota",
     tasks: "Tasks",
     menu: "Menu",
     orders: "Orders",
@@ -76,6 +77,17 @@ const en = {
     noUpcoming: "No upcoming shifts",
     noUpcomingHint: "When your manager schedules you, your shifts show up here.",
     shift: "Shift",
+  },
+  rota: {
+    title: "Rota",
+    subtitle: "See who's working each day",
+    thisWeek: "This week",
+    prevWeek: "Previous week",
+    nextWeek: "Next week",
+    today: "Today",
+    noOne: "No one scheduled.",
+    you: "You",
+    onShift: "on shift",
   },
   checklist: {
     title: "Checklist",
@@ -194,6 +206,7 @@ const fa: Dict = {
   lang: { label: "زبان", english: "English", persian: "فارسی" },
   nav: {
     shifts: "شیفت‌ها",
+    rota: "برنامه",
     tasks: "وظایف",
     menu: "منو",
     orders: "سفارش‌ها",
@@ -253,6 +266,17 @@ const fa: Dict = {
     noUpcoming: "شیفت پیش‌رویی ندارید",
     noUpcomingHint: "وقتی مدیر برای شما شیفت ثبت کند، اینجا نمایش داده می‌شود.",
     shift: "شیفت",
+  },
+  rota: {
+    title: "برنامه کاری",
+    subtitle: "ببینید هر روز چه کسی کار می‌کند",
+    thisWeek: "این هفته",
+    prevWeek: "هفته قبل",
+    nextWeek: "هفته بعد",
+    today: "امروز",
+    noOne: "کسی برنامه‌ریزی نشده.",
+    you: "شما",
+    onShift: "در شیفت",
   },
   checklist: {
     title: "چک‌لیست",
