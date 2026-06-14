@@ -322,6 +322,75 @@ function DayCard({
   );
 }
 
+type PersonHours = {
+  id: string;
+  name: string;
+  position: string | null;
+  hours: number;
+};
+
+/** Sidebar summary: hours each person is rota'd for this week. */
+function WeekHoursCard({
+  people,
+  openHours,
+  totalHours,
+}: {
+  people: PersonHours[];
+  openHours: number;
+  totalHours: number;
+}) {
+  return (
+    <Card>
+      <div className="mb-2 flex items-center gap-2">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-forest-500/15 text-forest-300">
+          <Icon name="clock" className="h-4 w-4" />
+        </span>
+        <h3 className="font-semibold text-ink">Hours per person</h3>
+      </div>
+      {people.length === 0 && openHours === 0 ? (
+        <p className="py-1 text-sm text-ink-faint">No shifts rota&apos;d yet.</p>
+      ) : (
+        <>
+          <ul className="divide-y divide-border-soft/60">
+            {people.map((p) => (
+              <li
+                key={p.id}
+                className="flex items-center justify-between gap-2 py-1.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-ink">{p.name}</p>
+                  {p.position && (
+                    <p className="truncate text-[11px] text-ink-faint">
+                      {p.position}
+                    </p>
+                  )}
+                </div>
+                <span className="shrink-0 rounded-lg bg-forest-500/10 px-2 py-1 text-xs font-semibold text-forest-200">
+                  {p.hours.toFixed(1)}h
+                </span>
+              </li>
+            ))}
+            {openHours > 0 && (
+              <li className="flex items-center justify-between gap-2 py-1.5">
+                <p className="truncate text-sm text-ink-muted">Open shifts</p>
+                <span className="shrink-0 rounded-lg bg-canvas/60 px-2 py-1 text-xs font-medium text-ink-faint">
+                  {openHours.toFixed(1)}h
+                </span>
+              </li>
+            )}
+          </ul>
+          <div className="mt-2 flex items-center justify-between border-t border-border-soft pt-2 text-sm">
+            <span className="font-medium text-ink">Total</span>
+            <span className="font-semibold text-forest-200">
+              {totalHours.toFixed(1)}h
+            </span>
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
 export default async function RotaPage({
   searchParams,
 }: {
@@ -423,6 +492,30 @@ export default async function RotaPage({
   );
   const openShifts = shifts.filter((s) => !s.employeeId).length;
 
+  // Hours allocated to each person this week (open shifts pooled separately).
+  const personMap = new Map<string, PersonHours>();
+  let openHours = 0;
+  for (const s of shifts) {
+    const h = shiftHours(s.start, s.end);
+    if (!s.employee) {
+      openHours += h;
+      continue;
+    }
+    const cur =
+      personMap.get(s.employee.id) ??
+      {
+        id: s.employee.id,
+        name: s.employee.name,
+        position: s.employee.position,
+        hours: 0,
+      };
+    cur.hours += h;
+    personMap.set(s.employee.id, cur);
+  }
+  const personHours = [...personMap.values()].sort(
+    (a, b) => b.hours - a.hours || a.name.localeCompare(b.name),
+  );
+
   return (
     <div className="space-y-5">
       <PageHeader title="Rota" subtitle="Weekly shifts & scheduling" />
@@ -510,21 +603,30 @@ export default async function RotaPage({
         </div>
       )}
 
-      {/* Days */}
-      <div className="grid gap-3 md:grid-cols-2">
-        {days.map((day, i) => (
-          <DayCard
-            key={toISODate(day)}
-            day={day}
-            shifts={byDay.get(toISODate(day)) ?? []}
-            employees={employees}
-            prefs={prefsByDay.get(i) ?? []}
-            off={offByDay.get(i) ?? []}
-            clocked={clockedByDay.get(toISODate(day)) ?? []}
-            weekISO={weekISO}
-            isToday={toISODate(day) === toISODate(today)}
+      {/* Per-person weekly hours (side panel on desktop) + days */}
+      <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[240px_1fr] lg:items-start">
+        <aside className="lg:sticky lg:top-6">
+          <WeekHoursCard
+            people={personHours}
+            openHours={openHours}
+            totalHours={totalHours}
           />
-        ))}
+        </aside>
+        <div className="grid gap-3 md:grid-cols-2">
+          {days.map((day, i) => (
+            <DayCard
+              key={toISODate(day)}
+              day={day}
+              shifts={byDay.get(toISODate(day)) ?? []}
+              employees={employees}
+              prefs={prefsByDay.get(i) ?? []}
+              off={offByDay.get(i) ?? []}
+              clocked={clockedByDay.get(toISODate(day)) ?? []}
+              weekISO={weekISO}
+              isToday={toISODate(day) === toISODate(today)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
