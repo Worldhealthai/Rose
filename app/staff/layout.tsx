@@ -19,6 +19,7 @@ export default async function StaffLayout({
 
   const NAV: NavItem[] = [
     { href: "/staff", label: t.nav.shifts, icon: "calendar", exact: true },
+    { href: "/staff/rota", label: t.nav.rota, icon: "users" },
     { href: "/staff/chat", label: t.nav.chat, icon: "message", badge: unreadChat },
     { href: "/staff/profile", label: t.nav.you, icon: "user" },
   ];
