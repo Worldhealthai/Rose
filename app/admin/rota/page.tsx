@@ -43,6 +43,7 @@ type PrefLite = {
 };
 type ClockedLite = {
   id: string;
+  employeeId: string;
   name: string;
   in: string;
   out: string | null;
@@ -326,18 +327,23 @@ type PersonHours = {
   id: string;
   name: string;
   position: string | null;
-  hours: number;
+  hours: number; // rota'd this week
+  clocked: number; // actually clocked this week
 };
 
-/** Sidebar summary: hours each person is rota'd for this week. */
+/** Sidebar summary: hours each person is rota'd vs actually clocked this week. */
 function WeekHoursCard({
   people,
   openHours,
   totalHours,
+  clockedTotal,
+  showClocked,
 }: {
   people: PersonHours[];
   openHours: number;
   totalHours: number;
+  clockedTotal: number;
+  showClocked: boolean;
 }) {
   return (
     <Card>
@@ -351,13 +357,19 @@ function WeekHoursCard({
         <p className="py-1 text-sm text-ink-faint">No shifts rota&apos;d yet.</p>
       ) : (
         <>
+          {showClocked && (
+            <div className="mb-1 flex items-center justify-end gap-3 pr-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
+              <span className="w-12 text-right">Rota&apos;d</span>
+              <span className="w-12 text-right">Clocked</span>
+            </div>
+          )}
           <ul className="divide-y divide-border-soft/60">
             {people.map((p) => (
               <li
                 key={p.id}
                 className="flex items-center justify-between gap-2 py-1.5"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{p.name}</p>
                   {p.position && (
                     <p className="truncate text-[11px] text-ink-faint">
@@ -365,25 +377,42 @@ function WeekHoursCard({
                     </p>
                   )}
                 </div>
-                <span className="shrink-0 rounded-lg bg-forest-500/10 px-2 py-1 text-xs font-semibold text-forest-200">
+                <span className="w-12 shrink-0 text-right text-xs font-semibold text-forest-200">
                   {p.hours.toFixed(1)}h
                 </span>
+                {showClocked && (
+                  <span
+                    className={`w-12 shrink-0 text-right text-xs ${
+                      p.clocked > 0 ? "text-ink-muted" : "text-ink-faint/70"
+                    }`}
+                  >
+                    {p.clocked > 0 ? `${p.clocked.toFixed(1)}h` : "—"}
+                  </span>
+                )}
               </li>
             ))}
             {openHours > 0 && (
               <li className="flex items-center justify-between gap-2 py-1.5">
-                <p className="truncate text-sm text-ink-muted">Open shifts</p>
-                <span className="shrink-0 rounded-lg bg-canvas/60 px-2 py-1 text-xs font-medium text-ink-faint">
+                <p className="min-w-0 flex-1 truncate text-sm text-ink-muted">
+                  Open shifts
+                </p>
+                <span className="w-12 shrink-0 text-right text-xs font-medium text-ink-faint">
                   {openHours.toFixed(1)}h
                 </span>
+                {showClocked && <span className="w-12 shrink-0" />}
               </li>
             )}
           </ul>
-          <div className="mt-2 flex items-center justify-between border-t border-border-soft pt-2 text-sm">
-            <span className="font-medium text-ink">Total</span>
-            <span className="font-semibold text-forest-200">
+          <div className="mt-2 flex items-center justify-between gap-2 border-t border-border-soft pt-2">
+            <span className="flex-1 text-sm font-medium text-ink">Total</span>
+            <span className="w-12 text-right text-sm font-semibold text-forest-200">
               {totalHours.toFixed(1)}h
             </span>
+            {showClocked && (
+              <span className="w-12 text-right text-sm font-medium text-ink-muted">
+                {clockedTotal.toFixed(1)}h
+              </span>
+            )}
           </div>
         </>
       )}
@@ -442,6 +471,7 @@ export default async function RotaPage({
     const list = clockedByDay.get(k) ?? [];
     list.push({
       id: e.id,
+      employeeId: e.employeeId,
       name: e.employee.name,
       in: formatClock(e.clockIn),
       out: e.clockOut ? formatClock(e.clockOut) : null,
@@ -493,7 +523,7 @@ export default async function RotaPage({
   const openShifts = shifts.filter((s) => !s.employeeId).length;
 
   // Hours allocated to each person this week (open shifts pooled separately).
-  const personMap = new Map<string, PersonHours>();
+  const rotadByPerson = new Map<string, number>();
   let openHours = 0;
   for (const s of shifts) {
     const h = shiftHours(s.start, s.end);
@@ -501,20 +531,46 @@ export default async function RotaPage({
       openHours += h;
       continue;
     }
-    const cur =
-      personMap.get(s.employee.id) ??
-      {
-        id: s.employee.id,
-        name: s.employee.name,
-        position: s.employee.position,
-        hours: 0,
-      };
-    cur.hours += h;
-    personMap.set(s.employee.id, cur);
+    rotadByPerson.set(s.employee.id, (rotadByPerson.get(s.employee.id) ?? 0) + h);
   }
-  const personHours = [...personMap.values()].sort(
-    (a, b) => b.hours - a.hours || a.name.localeCompare(b.name),
-  );
+
+  // Actual clocked hours per person, over the same week (open entries → now).
+  const clockedByPerson = new Map<string, number>();
+  for (const day of days) {
+    for (const c of clockedByDay.get(toISODate(day)) ?? []) {
+      clockedByPerson.set(
+        c.employeeId,
+        (clockedByPerson.get(c.employeeId) ?? 0) + c.hours,
+      );
+    }
+  }
+
+  // Name/position lookup: shifts carry the fullest record; fall back to the
+  // active-employee list, then to whatever name a clock entry recorded.
+  const empMeta = new Map<string, { name: string; position: string | null }>();
+  for (const e of employees) empMeta.set(e.id, { name: e.name, position: e.position });
+  for (const s of shifts) {
+    if (s.employee) empMeta.set(s.employee.id, { name: s.employee.name, position: s.employee.position });
+  }
+  const clockedNames = new Map<string, string>();
+  for (const list of clockedByDay.values())
+    for (const c of list) clockedNames.set(c.employeeId, c.name);
+
+  const personHours: PersonHours[] = [
+    ...new Set([...rotadByPerson.keys(), ...clockedByPerson.keys()]),
+  ]
+    .map((id) => ({
+      id,
+      name: empMeta.get(id)?.name ?? clockedNames.get(id) ?? "Unknown",
+      position: empMeta.get(id)?.position ?? null,
+      hours: rotadByPerson.get(id) ?? 0,
+      clocked: clockedByPerson.get(id) ?? 0,
+    }))
+    .sort(
+      (a, b) =>
+        b.hours - a.hours || b.clocked - a.clocked || a.name.localeCompare(b.name),
+    );
+  const anyClocked = clockedHours > 0;
 
   return (
     <div className="space-y-5">
@@ -610,6 +666,8 @@ export default async function RotaPage({
             people={personHours}
             openHours={openHours}
             totalHours={totalHours}
+            clockedTotal={clockedHours}
+            showClocked={anyClocked}
           />
         </aside>
         <div className="grid gap-3 md:grid-cols-2">
