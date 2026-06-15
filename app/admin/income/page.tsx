@@ -184,7 +184,7 @@ export default async function IncomePage({
               />
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {CHANNELS.map((c) => (
               <MoneyField
                 key={c.key}
@@ -309,7 +309,7 @@ export default async function IncomePage({
             }))}
           />
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           {CHANNELS.map((c) => (
             <div key={c.key} className="rounded-xl bg-canvas/40 p-3">
               <p className="flex items-center gap-2 text-xs text-ink-muted">
@@ -372,7 +372,7 @@ export default async function IncomePage({
                       }))}
                     />
                   </div>
-                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
+                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
                     {CHANNELS.map((c) => (
                       <span key={c.key} className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5 text-ink-faint">

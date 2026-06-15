@@ -150,6 +150,8 @@ async function main() {
         data: {
           date,
           zReport: Math.round(base + rnd(i * 3) * 450),
+          cash: Math.round(40 + rnd(i * 17) * 120),
+          tide: Math.round(120 + rnd(i * 19) * 300),
           justEat: Math.round(90 + rnd(i * 5) * 260),
           uberEats: Math.round(70 + rnd(i * 7) * 230),
           deliveroo: Math.round(50 + rnd(i * 11) * 190),
