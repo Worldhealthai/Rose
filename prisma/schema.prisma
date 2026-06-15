@@ -164,6 +164,7 @@ model Expense {
   category   String // Stock, Wages, Rent, Bills, Other
   amount     Float     @default(0)
   note       String?
+  periodEnd  DateTime? // for Wages: the date this payment covers up to ("paid until")
   supplierId String?
   supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   employeeId String? // set for wage payments
