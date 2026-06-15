@@ -8,9 +8,10 @@ export const PopoverCloseCtx = createContext<(() => void) | null>(null);
 
 /**
  * A dismissable popup: bottom sheet on mobile, centered modal on desktop.
- * Closes on backdrop tap, Escape, or the ✕ button. The overlay itself scrolls,
- * so content taller than the screen (small phones, keyboard open) stays
- * reachable.
+ * Closes on backdrop tap, Escape, or the ✕ button. The title bar stays
+ * pinned while the body scrolls, and the panel is capped to the viewport
+ * height, so a long form never spills off-screen on short windows or when
+ * the on-screen keyboard is open.
  */
 export function Popover({
   title,
@@ -58,32 +59,28 @@ export function Popover({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-end sm:justify-center sm:p-6"
           role="dialog"
           aria-modal="true"
         >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div
-            className="flex min-h-full items-end justify-center sm:items-center sm:p-6"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setOpen(false);
-            }}
-          >
-            <div className="relative w-full rounded-t-3xl border border-border bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:max-w-md sm:rounded-3xl sm:pb-5">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-ink">{title}</h3>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  aria-label="Close"
-                  className="grid h-9 w-9 place-items-center rounded-lg text-ink-muted hover:bg-elevated hover:text-ink"
-                >
-                  <Icon name="plus" className="h-5 w-5 rotate-45" />
-                </button>
-              </div>
+          <div className="relative z-10 flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-border bg-surface shadow-2xl sm:max-h-[85dvh] sm:max-w-md sm:rounded-3xl">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border-soft px-5 py-4">
+              <h3 className="text-base font-semibold text-ink">{title}</h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-ink-muted hover:bg-elevated hover:text-ink"
+              >
+                <Icon name="plus" className="h-5 w-5 rotate-45" />
+              </button>
+            </div>
+            <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
               <PopoverCloseCtx.Provider value={close}>
                 {children}
               </PopoverCloseCtx.Provider>
