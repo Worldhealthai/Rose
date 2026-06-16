@@ -106,6 +106,8 @@ model DailyIncome {
   id        String   @id @default(cuid())
   date      DateTime @unique // the trading day (stored at 00:00 UTC)
   zReport   Float    @default(0) // till / in-house takings from the Z report
+  cash      Float    @default(0) // cash takings
+  tide      Float    @default(0) // card / Tide bank takings
   justEat   Float    @default(0)
   uberEats  Float    @default(0)
   deliveroo Float    @default(0)

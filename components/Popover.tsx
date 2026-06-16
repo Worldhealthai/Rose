@@ -8,10 +8,9 @@ export const PopoverCloseCtx = createContext<(() => void) | null>(null);
 
 /**
  * A dismissable popup: bottom sheet on mobile, centered modal on desktop.
- * Closes on backdrop tap, Escape, or the ✕ button. The title bar stays
- * pinned while the body scrolls, and the panel is capped to the viewport
- * height, so a long form never spills off-screen on short windows or when
- * the on-screen keyboard is open.
+ * Closes on backdrop tap, Escape, or the ✕ button. The panel sizes to its
+ * content and the whole overlay scrolls when it's taller than the window —
+ * so the form is shown in full, never squeezed into a small scroll-box.
  */
 export function Popover({
   title,
@@ -59,31 +58,34 @@ export function Popover({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-end sm:justify-center sm:p-6"
+          className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
           role="dialog"
           aria-modal="true"
         >
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative z-10 flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-border bg-surface shadow-2xl sm:max-h-[85dvh] sm:max-w-md sm:rounded-3xl">
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border-soft px-5 py-4">
-              <h3 className="text-base font-semibold text-ink">{title}</h3>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-ink-muted hover:bg-elevated hover:text-ink"
-              >
-                <Icon name="plus" className="h-5 w-5 rotate-45" />
-              </button>
-            </div>
-            <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-              <PopoverCloseCtx.Provider value={close}>
-                {children}
-              </PopoverCloseCtx.Provider>
+          <div className="flex min-h-full items-end justify-center sm:items-center sm:p-6">
+            <div className="relative w-full rounded-t-3xl border border-border bg-surface shadow-2xl sm:max-w-md sm:rounded-3xl">
+              {/* Title bar sticks to the top while a long form scrolls past it */}
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-t-3xl border-b border-border-soft bg-surface px-5 py-4">
+                <h3 className="text-base font-semibold text-ink">{title}</h3>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-ink-muted hover:bg-elevated hover:text-ink"
+                >
+                  <Icon name="plus" className="h-5 w-5 rotate-45" />
+                </button>
+              </div>
+              <div className="px-5 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                <PopoverCloseCtx.Provider value={close}>
+                  {children}
+                </PopoverCloseCtx.Provider>
+              </div>
             </div>
           </div>
         </div>

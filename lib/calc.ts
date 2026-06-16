@@ -31,17 +31,21 @@ export function elapsedShiftHours(start: string, end: string, now: string): numb
 
 export type IncomeLike = {
   zReport: number;
+  cash: number;
+  tide: number;
   justEat: number;
   uberEats: number;
   deliveroo: number;
 };
 
 export function incomeTotal(i: IncomeLike): number {
-  return i.zReport + i.justEat + i.uberEats + i.deliveroo;
+  return i.zReport + i.cash + i.tide + i.justEat + i.uberEats + i.deliveroo;
 }
 
 export const CHANNELS = [
   { key: "zReport", label: "Z report", color: "#37c97e" },
+  { key: "cash", label: "Cash", color: "#a3e635" },
+  { key: "tide", label: "Tide", color: "#6366f1" },
   { key: "justEat", label: "Just Eat", color: "#f59e0b" },
   { key: "uberEats", label: "Uber Eats", color: "#0a0a0a" },
   { key: "deliveroo", label: "Deliveroo", color: "#22d3ee" },
@@ -51,12 +55,14 @@ export function sumIncome(rows: IncomeLike[]): IncomeLike & { total: number } {
   const acc = rows.reduce(
     (a, r) => {
       a.zReport += r.zReport;
+      a.cash += r.cash;
+      a.tide += r.tide;
       a.justEat += r.justEat;
       a.uberEats += r.uberEats;
       a.deliveroo += r.deliveroo;
       return a;
     },
-    { zReport: 0, justEat: 0, uberEats: 0, deliveroo: 0 },
+    { zReport: 0, cash: 0, tide: 0, justEat: 0, uberEats: 0, deliveroo: 0 },
   );
   return { ...acc, total: incomeTotal(acc) };
 }
@@ -73,6 +79,8 @@ export function netIncome(
 ): number {
   return (
     i.zReport +
+    i.cash +
+    i.tide +
     i.justEat * (1 - rates.justEat) +
     i.uberEats * (1 - rates.uberEats) +
     i.deliveroo * (1 - rates.deliveroo)

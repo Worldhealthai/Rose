@@ -12,7 +12,7 @@ import {
 import { incomeTotal, shiftHours, sumIncome, pct, netIncome } from "./calc";
 import { getCommissionRates } from "./settings";
 
-const ZERO = { zReport: 0, justEat: 0, uberEats: 0, deliveroo: 0 };
+const ZERO = { zReport: 0, cash: 0, tide: 0, justEat: 0, uberEats: 0, deliveroo: 0 };
 
 export async function getDashboardData() {
   const today = todayFn();

@@ -19,6 +19,8 @@ export async function upsertIncome(formData: FormData) {
   const date = parseDay(String(formData.get("date")));
   const data = {
     zReport: parseMoney(formData.get("zReport")),
+    cash: parseMoney(formData.get("cash")),
+    tide: parseMoney(formData.get("tide")),
     justEat: parseMoney(formData.get("justEat")),
     uberEats: parseMoney(formData.get("uberEats")),
     deliveroo: parseMoney(formData.get("deliveroo")),
