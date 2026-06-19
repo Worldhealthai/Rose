@@ -57,7 +57,7 @@ function PaymentFields({
             name="amount"
             type="number"
             step="0.01"
-            min="0"
+            min="0.01"
             defaultValue={defaults.amount}
             placeholder="0.00"
             className="input pl-7"
@@ -306,7 +306,10 @@ export default async function PayrollPage({
                             />
                             <form action={deleteWagePayment} className="mt-2">
                               <input type="hidden" name="id" value={p.id} />
-                              <FormButton className="btn-ghost w-full text-danger hover:bg-danger/10">
+                              <FormButton
+                                className="btn-ghost w-full text-danger hover:bg-danger/10"
+                                savedLabel="Deleted ✓"
+                              >
                                 <Icon name="trash" className="h-4 w-4" />
                                 Delete payment
                               </FormButton>
