@@ -19,6 +19,7 @@ export default async function AdminLayout({
 
   const NAV: NavItem[] = [
     { href: "/admin", label: "Dashboard", icon: "dashboard", exact: true },
+    { href: "/admin/assistant", label: "Assistant", icon: "star" },
     { href: "/admin/notifications", label: "Notifications", icon: "bell", badge: unread },
     { href: "/admin/chat", label: "Chat", icon: "message", badge: unreadChat },
     { href: "/admin/rota", label: "Rota", icon: "calendar" },
