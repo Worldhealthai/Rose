@@ -1,16 +1,9 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import {
-  parseDay,
-  startOfWeek,
-  addDays,
-  toISODate,
-  localTimeToDate,
-} from "@/lib/dates";
+import { parseDay, startOfWeek, addDays, localTimeToDate } from "@/lib/dates";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -20,12 +13,6 @@ function refresh() {
   revalidatePath("/admin/rota");
   revalidatePath("/admin");
   revalidatePath("/staff");
-}
-
-function weekRedirect(fd: FormData, fallbackDate: Date): never {
-  const wk = str(fd, "week");
-  const week = wk ? parseDay(wk) : startOfWeek(fallbackDate);
-  redirect(`/admin/rota?week=${toISODate(startOfWeek(week))}`);
 }
 
 export async function createShift(formData: FormData) {
@@ -45,14 +32,13 @@ export async function createShift(formData: FormData) {
     },
   });
   refresh();
-  weekRedirect(formData, date);
 }
 
 export async function updateShift(formData: FormData) {
   await requireAdmin();
   const id = str(formData, "id");
-  if (!id) weekRedirect(formData, new Date());
-  const updated = await prisma.shift.update({
+  if (!id) return;
+  await prisma.shift.update({
     where: { id },
     data: {
       start: str(formData, "start") || "09:00",
@@ -62,7 +48,6 @@ export async function updateShift(formData: FormData) {
     },
   });
   refresh();
-  weekRedirect(formData, updated.date);
 }
 
 function refreshClock() {
@@ -103,7 +88,6 @@ export async function addTimeEntry(formData: FormData) {
     });
   }
   refreshClock();
-  weekRedirect(formData, parseDay(dayISO));
 }
 
 /** Edit a clock entry's in/out times. Leave "out" empty to keep it open. */
@@ -122,7 +106,6 @@ export async function updateTimeEntry(formData: FormData) {
     await prisma.timeEntry.update({ where: { id }, data: { clockIn, clockOut } });
   }
   refreshClock();
-  weekRedirect(formData, parseDay(dayISO));
 }
 
 export async function deleteTimeEntry(formData: FormData) {
@@ -130,7 +113,6 @@ export async function deleteTimeEntry(formData: FormData) {
   const id = str(formData, "id");
   if (id) await prisma.timeEntry.delete({ where: { id } });
   refreshClock();
-  weekRedirect(formData, new Date());
 }
 
 /** Duplicate last week's shifts into the week being viewed. */
@@ -155,14 +137,12 @@ export async function copyLastWeek(formData: FormData) {
     });
   }
   refresh();
-  redirect(`/admin/rota?week=${toISODate(week)}`);
 }
 
 export async function deleteShift(formData: FormData) {
   await requireAdmin();
   const id = str(formData, "id");
-  if (!id) weekRedirect(formData, new Date());
-  const deleted = await prisma.shift.delete({ where: { id } });
+  if (!id) return;
+  await prisma.shift.delete({ where: { id } });
   refresh();
-  weekRedirect(formData, deleted.date);
 }

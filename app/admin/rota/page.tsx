@@ -165,7 +165,10 @@ function DayCard({
                   <form action={deleteShift} className="mt-2">
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="week" value={weekISO} />
-                    <FormButton className="btn-ghost w-full text-danger hover:bg-danger/10">
+                    <FormButton
+                      className="btn-ghost w-full text-danger hover:bg-danger/10"
+                      savedLabel="Deleted ✓"
+                    >
                       <Icon name="trash" className="h-4 w-4" />
                       Delete shift
                     </FormButton>
@@ -261,7 +264,10 @@ function DayCard({
                       <form action={deleteTimeEntry} className="mt-2">
                         <input type="hidden" name="id" value={c.id} />
                         <input type="hidden" name="week" value={weekISO} />
-                        <FormButton className="btn-ghost w-full text-danger hover:bg-danger/10">
+                        <FormButton
+                          className="btn-ghost w-full text-danger hover:bg-danger/10"
+                          savedLabel="Deleted ✓"
+                        >
                           <Icon name="trash" className="h-4 w-4" />
                           Delete entry
                         </FormButton>
