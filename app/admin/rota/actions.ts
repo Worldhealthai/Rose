@@ -115,27 +115,45 @@ export async function deleteTimeEntry(formData: FormData) {
   refreshClock();
 }
 
-/** Duplicate last week's shifts into the week being viewed. */
-export async function copyLastWeek(formData: FormData) {
+/**
+ * Duplicate last week's shifts into the week being viewed. Returns the ids of
+ * the shifts it created so the action can be undone (see undoCreatedShifts).
+ */
+export async function copyLastWeek(
+  weekISO: string,
+): Promise<{ created: number; ids: string[] }> {
   await requireAdmin();
-  const week = startOfWeek(parseDay(str(formData, "week")));
+  const week = startOfWeek(parseDay(weekISO));
   const lastStart = addDays(week, -7);
   const lastEnd = addDays(week, -1);
   const prev = await prisma.shift.findMany({
     where: { date: { gte: lastStart, lte: lastEnd } },
   });
+  const ids: string[] = [];
   if (prev.length) {
-    await prisma.shift.createMany({
-      data: prev.map((s) => ({
+    const data = prev.map((s) => {
+      const id = crypto.randomUUID();
+      ids.push(id);
+      return {
+        id,
         date: addDays(s.date, 7),
         start: s.start,
         end: s.end,
         role: s.role,
         employeeId: s.employeeId,
         published: s.published,
-      })),
+      };
     });
+    await prisma.shift.createMany({ data });
   }
+  refresh();
+  return { created: ids.length, ids };
+}
+
+/** Undo a copy-last-week by deleting exactly the shifts it created. */
+export async function undoCreatedShifts(ids: string[]): Promise<void> {
+  await requireAdmin();
+  if (ids.length) await prisma.shift.deleteMany({ where: { id: { in: ids } } });
   refresh();
 }
 
