@@ -19,11 +19,11 @@ import { PageHeader, Card, StatCard, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Popover } from "@/components/Popover";
 import { FormButton } from "@/components/FormButton";
+import { CopyLastWeekButton } from "@/components/CopyLastWeekButton";
 import {
   createShift,
   updateShift,
   deleteShift,
-  copyLastWeek,
   addTimeEntry,
   updateTimeEntry,
   deleteTimeEntry,
@@ -612,13 +612,7 @@ export default async function RotaPage({
       </div>
 
       <div className="flex justify-center">
-        <form action={copyLastWeek}>
-          <input type="hidden" name="week" value={weekISO} />
-          <FormButton className="btn-ghost text-sm" savedLabel="Copied ✓">
-            <Icon name="calendar" className="h-4 w-4" />
-            Copy last week&apos;s shifts
-          </FormButton>
-        </form>
+        <CopyLastWeekButton week={weekISO} />
       </div>
 
       {/* Week summary */}
