@@ -100,6 +100,8 @@ const en = {
     noOne: "No one scheduled.",
     you: "You",
     onShift: "on shift",
+    clocked: "Clocked (actual)",
+    noClocked: "No clock-ins.",
   },
   checklist: {
     title: "Checklist",
@@ -301,6 +303,8 @@ const fa: Dict = {
     noOne: "کسی برنامه‌ریزی نشده.",
     you: "شما",
     onShift: "در شیفت",
+    clocked: "ثبت واقعی",
+    noClocked: "ثبت ورودی نیست.",
   },
   checklist: {
     title: "چک‌لیست",
