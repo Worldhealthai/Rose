@@ -58,6 +58,24 @@ export async function clockOut() {
   refresh();
 }
 
+/** Add a clock entry the staff member forgot to log (for any day up to today). */
+export async function addMyTimeEntry(formData: FormData) {
+  const me = await requireStaff();
+  const dayISO = str(formData, "date");
+  const inHHMM = str(formData, "in");
+  const outHHMM = str(formData, "out");
+  if (!DAY.test(dayISO) || !HHMM.test(inHHMM)) return;
+  const { clockIn, clockOut } = clockTimes(
+    dayISO,
+    inHHMM,
+    HHMM.test(outHHMM) ? outHHMM : "",
+  );
+  await prisma.timeEntry.create({
+    data: { employeeId: me.id, clockIn, clockOut },
+  });
+  refresh();
+}
+
 /**
  * Let a staff member correct one of their own clock entries — e.g. set the
  * check-out time they forgot to log. Only ever touches the caller's entries.

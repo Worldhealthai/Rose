@@ -45,6 +45,11 @@ const en = {
     saved: "Saved ✓",
     delete: "Delete",
     deleted: "Deleted ✓",
+    add: "Add",
+    addEntryTitle: "Add a missed entry",
+    addHint:
+      "Add hours you forgot to clock — choose the day and the times you worked.",
+    dayLabel: "Day",
   },
   chat: {
     title: "Team chat",
@@ -241,6 +246,11 @@ const fa: Dict = {
     saved: "ذخیره شد ✓",
     delete: "حذف",
     deleted: "حذف شد ✓",
+    add: "افزودن",
+    addEntryTitle: "افزودن ورود فراموش‌شده",
+    addHint:
+      "ساعت‌هایی که ثبت نکرده‌اید را اضافه کنید — روز و ساعت‌های کاری را انتخاب کنید.",
+    dayLabel: "روز",
   },
   chat: {
     title: "گفتگوی تیم",

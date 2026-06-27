@@ -26,6 +26,7 @@ import { Popover } from "@/components/Popover";
 import {
   clockIn,
   clockOut,
+  addMyTimeEntry,
   updateMyTimeEntry,
   deleteMyTimeEntry,
 } from "./actions";
@@ -171,9 +172,45 @@ export default async function StaffHome() {
 
           {/* What's been logged today, and what it's worth */}
           <div className="rounded-xl bg-canvas/40 p-3">
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-              {tc.todayLog}
-            </p>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+                {tc.todayLog}
+              </p>
+              <Popover
+                title={tc.addEntryTitle}
+                triggerIcon="plus"
+                triggerLabel={tc.add}
+                triggerClassName="flex items-center rounded-md px-2 py-1 text-xs font-medium text-forest-300 hover:bg-forest-500/10"
+              >
+                <form action={addMyTimeEntry} className="space-y-3">
+                  <div>
+                    <label className="label">{tc.dayLabel}</label>
+                    <input
+                      name="date"
+                      type="date"
+                      defaultValue={todayISO}
+                      max={todayISO}
+                      className="input"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="label">{tc.checkIn}</label>
+                      <input name="in" type="time" className="input" required />
+                    </div>
+                    <div>
+                      <label className="label">{tc.checkOut}</label>
+                      <input name="out" type="time" className="input" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-ink-faint">{tc.addHint}</p>
+                  <FormButton className="btn-primary w-full" savedLabel={tc.saved}>
+                    {tc.add}
+                  </FormButton>
+                </form>
+              </Popover>
+            </div>
             {logEntries.length === 0 ? (
               <p className="text-xs text-ink-faint">{tc.noEntries}</p>
             ) : (
