@@ -38,6 +38,18 @@ const en = {
     todayLog: "Today's log",
     now: "now",
     noEntries: "No check-ins yet today.",
+    editEntry: "Edit hours",
+    editHint:
+      "Forgot to check out? Set the time you actually left. Leave the check-out empty if you're still working.",
+    save: "Save",
+    saved: "Saved ✓",
+    delete: "Delete",
+    deleted: "Deleted ✓",
+    add: "Add",
+    addEntryTitle: "Add a missed entry",
+    addHint:
+      "Add hours you forgot to clock — choose the day and the times you worked.",
+    dayLabel: "Day",
   },
   chat: {
     title: "Team chat",
@@ -227,6 +239,18 @@ const fa: Dict = {
     todayLog: "ثبت‌های امروز",
     now: "اکنون",
     noEntries: "امروز هنوز ورودی ثبت نشده است.",
+    editEntry: "ویرایش ساعت‌ها",
+    editHint:
+      "یادتان رفت خروج بزنید؟ ساعتی که واقعاً رفتید را وارد کنید. اگر هنوز مشغول کارید، خروج را خالی بگذارید.",
+    save: "ذخیره",
+    saved: "ذخیره شد ✓",
+    delete: "حذف",
+    deleted: "حذف شد ✓",
+    add: "افزودن",
+    addEntryTitle: "افزودن ورود فراموش‌شده",
+    addHint:
+      "ساعت‌هایی که ثبت نکرده‌اید را اضافه کنید — روز و ساعت‌های کاری را انتخاب کنید.",
+    dayLabel: "روز",
   },
   chat: {
     title: "گفتگوی تیم",

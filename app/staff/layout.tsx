@@ -4,6 +4,7 @@ import { getDict, isRTL } from "@/lib/i18n";
 import { getUnreadChatCount } from "@/lib/chat";
 import { avatarUrl } from "@/lib/avatar";
 import { PortalShell, type NavItem } from "@/components/PortalShell";
+import { Toaster } from "@/components/Toast";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,7 @@ export default async function StaffLayout({
       }}
     >
       {children}
+      <Toaster />
     </PortalShell>
   );
 }
