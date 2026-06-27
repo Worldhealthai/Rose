@@ -12,6 +12,7 @@ import {
   toISODate,
   relativeDay,
   formatLongDay,
+  formatShort,
   formatClock,
   localDayISO,
 } from "@/lib/dates";
@@ -20,7 +21,14 @@ import { money } from "@/lib/money";
 import { Card, StatCard, SectionTitle, EmptyState, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { RefreshButton } from "@/components/forms";
-import { clockIn, clockOut } from "./actions";
+import { FormButton } from "@/components/FormButton";
+import { Popover } from "@/components/Popover";
+import {
+  clockIn,
+  clockOut,
+  updateMyTimeEntry,
+  deleteMyTimeEntry,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +79,12 @@ export default async function StaffHome() {
   const todayEntries = weekEntries.filter(
     (e) => localDayISO(e.clockIn) === todayISO,
   );
+  // What to show in the editable log: today's entries, plus any still-open
+  // entry from an earlier day (a forgotten check-out) so it can be fixed.
+  const logEntries =
+    openEntry && !todayEntries.some((e) => e.id === openEntry.id)
+      ? [openEntry, ...todayEntries]
+      : todayEntries;
   const workedToday = sumEntryHours(todayEntries, now);
   const workedWeek = sumEntryHours(
     weekEntries.filter((e) => e.clockIn >= week[0]),
@@ -160,21 +174,79 @@ export default async function StaffHome() {
             <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
               {tc.todayLog}
             </p>
-            {todayEntries.length === 0 ? (
+            {logEntries.length === 0 ? (
               <p className="text-xs text-ink-faint">{tc.noEntries}</p>
             ) : (
               <ul className="space-y-1">
-                {todayEntries.map((e) => (
+                {logEntries.map((e) => (
                   <li
                     key={e.id}
                     className="flex items-center justify-between gap-2 text-sm"
                   >
                     <span className="text-ink">
+                      {localDayISO(e.clockIn) !== todayISO && (
+                        <span className="mr-1 text-ink-faint">
+                          {formatShort(e.clockIn)}
+                        </span>
+                      )}
                       {formatClock(e.clockIn)}–
                       {e.clockOut ? formatClock(e.clockOut) : tc.now}
                     </span>
-                    <span className="text-ink-muted">
+                    <span className="flex items-center gap-1.5 text-ink-muted">
                       {hoursLine(entryHours(e, now))}
+                      <Popover
+                        title={tc.editEntry}
+                        triggerClassName="grid h-7 w-7 shrink-0 place-items-center rounded-md text-ink-faint hover:bg-elevated hover:text-ink"
+                      >
+                        <form action={updateMyTimeEntry} className="space-y-3">
+                          <input type="hidden" name="id" value={e.id} />
+                          <input
+                            type="hidden"
+                            name="date"
+                            value={localDayISO(e.clockIn)}
+                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="label">{tc.checkIn}</label>
+                              <input
+                                name="in"
+                                type="time"
+                                defaultValue={formatClock(e.clockIn)}
+                                className="input"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="label">{tc.checkOut}</label>
+                              <input
+                                name="out"
+                                type="time"
+                                defaultValue={
+                                  e.clockOut ? formatClock(e.clockOut) : ""
+                                }
+                                className="input"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-xs text-ink-faint">{tc.editHint}</p>
+                          <FormButton
+                            className="btn-primary w-full"
+                            savedLabel={tc.saved}
+                          >
+                            {tc.save}
+                          </FormButton>
+                        </form>
+                        <form action={deleteMyTimeEntry} className="mt-2">
+                          <input type="hidden" name="id" value={e.id} />
+                          <FormButton
+                            className="btn-ghost w-full text-danger hover:bg-danger/10"
+                            savedLabel={tc.deleted}
+                          >
+                            <Icon name="trash" className="h-4 w-4" />
+                            {tc.delete}
+                          </FormButton>
+                        </form>
+                      </Popover>
                     </span>
                   </li>
                 ))}
