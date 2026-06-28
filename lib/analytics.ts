@@ -11,6 +11,7 @@ import {
 } from "./dates";
 import { incomeTotal, shiftHours, sumIncome, pct, netIncome } from "./calc";
 import { getCommissionRates } from "./settings";
+import { recurringForMonth } from "./expenses";
 
 const ZERO = { zReport: 0, cash: 0, tide: 0, justEat: 0, uberEats: 0, deliveroo: 0 };
 
@@ -65,7 +66,10 @@ export async function getDashboardData() {
   const weekSum = sumIncome(weekRows);
   const monthSum = sumIncome(monthRows);
   const monthNet = monthRows.reduce((s, r) => s + netIncome(r, rates), 0);
-  const monthExpenses = expenseAgg._sum.amount ?? 0;
+  const recurring = await recurringForMonth(monthStart);
+  const monthExpenses =
+    (expenseAgg._sum.amount ?? 0) +
+    recurring.reduce((s, r) => s + r.amount, 0);
   const monthProfit = monthNet - monthExpenses;
 
   // 30-day trend

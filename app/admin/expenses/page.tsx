@@ -9,11 +9,12 @@ import {
   addMonths,
   formatMonth,
 } from "@/lib/dates";
-import { PageHeader, Card, StatCard, SectionTitle } from "@/components/ui";
+import { PageHeader, Card, StatCard, SectionTitle, Badge } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { Icon } from "@/components/icons";
 import { ExpenseForm } from "@/components/ExpenseForm";
-import { deleteExpense } from "./actions";
+import { recurringForMonth } from "@/lib/expenses";
+import { deleteExpense, stopRecurring } from "./actions";
 
 export const dynamic = "force-dynamic";
 const monthParam = (d: Date) => d.toISOString().slice(0, 7);
@@ -29,18 +30,51 @@ export default async function ExpensesPage({
   const monthEnd = endOfMonth(anchor);
   const mp = monthParam(monthStart);
 
-  const rows = await prisma.expense.findMany({
-    where: { date: { gte: monthStart, lte: monthEnd } },
-    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-    include: {
-      supplier: { select: { name: true } },
-      employee: { select: { name: true } },
-    },
-  });
+  const [rows, recurring] = await Promise.all([
+    prisma.expense.findMany({
+      where: { date: { gte: monthStart, lte: monthEnd } },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+      include: {
+        supplier: { select: { name: true } },
+        employee: { select: { name: true } },
+      },
+    }),
+    recurringForMonth(monthStart),
+  ]);
 
-  const total = rows.reduce((s, r) => s + r.amount, 0);
+  // Fixed monthly costs show first, then this month's one-off expenses.
+  type Item = {
+    kind: "one" | "rec";
+    id: string;
+    category: string;
+    note: string | null;
+    amount: number;
+    sub: string;
+  };
+  const items: Item[] = [
+    ...recurring.map((r) => ({
+      kind: "rec" as const,
+      id: r.id,
+      category: r.category,
+      note: r.note,
+      amount: r.amount,
+      sub: r.category,
+    })),
+    ...rows.map((r) => ({
+      kind: "one" as const,
+      id: r.id,
+      category: r.category,
+      note: r.note,
+      amount: r.amount,
+      sub: [r.note?.trim() ? r.category : null, r.employee?.name, r.supplier?.name]
+        .filter(Boolean)
+        .join(" · "),
+    })),
+  ];
+
+  const total = items.reduce((s, r) => s + r.amount, 0);
   const byCat = new Map<string, number>();
-  for (const r of rows) byCat.set(r.category, (byCat.get(r.category) ?? 0) + r.amount);
+  for (const r of items) byCat.set(r.category, (byCat.get(r.category) ?? 0) + r.amount);
   const topCats = [...byCat.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
 
   return (
@@ -89,7 +123,7 @@ export default async function ExpensesPage({
       {/* List */}
       <div>
         <SectionTitle>{formatMonth(monthStart)}</SectionTitle>
-        {rows.length === 0 ? (
+        {items.length === 0 ? (
           <Card>
             <p className="py-6 text-center text-sm text-ink-muted">
               No expenses recorded for {formatMonth(monthStart)}.
@@ -97,35 +131,35 @@ export default async function ExpensesPage({
           </Card>
         ) : (
           <ul className="space-y-2">
-            {rows.map((r) => {
+            {items.map((r) => {
               const name = r.note?.trim() || r.category;
-              const sub = [
-                r.note?.trim() ? r.category : null,
-                r.employee?.name,
-                r.supplier?.name,
-              ]
-                .filter(Boolean)
-                .join(" · ");
               return (
                 <Card
                   as="li"
-                  key={r.id}
+                  key={`${r.kind}-${r.id}`}
                   className="flex items-center justify-between gap-3"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{name}</p>
-                    {sub && (
-                      <p className="truncate text-xs text-ink-muted">{sub}</p>
+                    <p className="flex items-center gap-2 truncate font-medium text-ink">
+                      <span className="truncate">{name}</span>
+                      {r.kind === "rec" && (
+                        <Badge color="#22d3ee" tone="soft">
+                          Monthly
+                        </Badge>
+                      )}
+                    </p>
+                    {r.sub && (
+                      <p className="truncate text-xs text-ink-muted">{r.sub}</p>
                     )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="font-semibold text-ink">{money(r.amount)}</span>
-                    <form action={deleteExpense}>
+                    <form action={r.kind === "rec" ? stopRecurring : deleteExpense}>
                       <input type="hidden" name="id" value={r.id} />
                       <input type="hidden" name="month" value={mp} />
                       <button
                         className="grid h-9 w-9 place-items-center rounded-lg text-ink-faint hover:bg-danger/10 hover:text-danger"
-                        aria-label="Delete"
+                        aria-label={r.kind === "rec" ? "Stop repeating" : "Delete"}
                       >
                         <Icon name="trash" className="h-4 w-4" />
                       </button>
