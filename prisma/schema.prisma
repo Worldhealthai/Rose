@@ -177,6 +177,20 @@ model Expense {
   @@index([employeeId])
 }
 
+/// A fixed cost that repeats every month (e.g. rent). It's shown and counted
+/// in every month from `startMonth` through `endMonth` (null = ongoing).
+model RecurringExpense {
+  id         String    @id @default(cuid())
+  category   String
+  note       String?
+  amount     Float     @default(0)
+  startMonth DateTime // 1st of the first month it applies (UTC midnight)
+  endMonth   DateTime? // 1st of the last month it applies; null = still ongoing
+  createdAt  DateTime  @default(now())
+
+  @@index([startMonth])
+}
+
 /// A staff holiday / time-off request.
 model TimeOff {
   id         String   @id @default(cuid())

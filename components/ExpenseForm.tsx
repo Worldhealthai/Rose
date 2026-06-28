@@ -84,6 +84,14 @@ export function ExpenseForm({ defaultMonth }: { defaultMonth: string }) {
           />
         </div>
       </div>
+      <label className="flex items-center gap-2 text-sm text-ink-muted">
+        <input
+          type="checkbox"
+          name="repeat"
+          className="h-4 w-4 accent-forest-500"
+        />
+        Repeat every month (fixed cost like rent)
+      </label>
       <SubmitButton savedLabel="Added ✓">Add expense</SubmitButton>
     </RefreshForm>
   );
