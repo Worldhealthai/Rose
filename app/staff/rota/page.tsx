@@ -12,10 +12,22 @@ import {
   addDays,
   toISODate,
   formatShort,
+  formatClock,
+  localDayISO,
   weekdayIndex,
 } from "@/lib/dates";
+import { entryHours, fmtHours } from "@/lib/timeclock";
 import { PageHeader, Card, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
+
+type Clocked = {
+  id: string;
+  employeeId: string;
+  name: string;
+  in: string;
+  out: string | null;
+  hours: number;
+};
 
 export const dynamic = "force-dynamic";
 
@@ -37,20 +49,43 @@ export default async function StaffRotaPage({
   const weekEnd = days[6];
 
   // Assigned, published shifts only — no open slots, no draft rotas, no rates.
-  const shifts = await prisma.shift.findMany({
-    where: {
-      date: { gte: weekStart, lte: weekEnd },
-      employeeId: { not: null },
-      published: true,
-    },
-    include: { employee: { select: { id: true, name: true, position: true } } },
-    orderBy: { start: "asc" },
-  });
+  const [shifts, timeEntries] = await Promise.all([
+    prisma.shift.findMany({
+      where: {
+        date: { gte: weekStart, lte: weekEnd },
+        employeeId: { not: null },
+        published: true,
+      },
+      include: { employee: { select: { id: true, name: true, position: true } } },
+      orderBy: { start: "asc" },
+    }),
+    prisma.timeEntry.findMany({
+      where: { clockIn: { gte: addDays(weekStart, -1), lt: addDays(weekEnd, 2) } },
+      include: { employee: { select: { id: true, name: true } } },
+      orderBy: { clockIn: "asc" },
+    }),
+  ]);
 
   const byDay = new Map<string, typeof shifts>();
   for (const s of shifts) {
     const k = toISODate(s.date);
     (byDay.get(k) ?? byDay.set(k, []).get(k)!).push(s);
+  }
+
+  // Actual clock-ins, grouped by the restaurant-local day they started on.
+  const clockedByDay = new Map<string, Clocked[]>();
+  for (const e of timeEntries) {
+    const k = localDayISO(e.clockIn);
+    const list = clockedByDay.get(k) ?? [];
+    list.push({
+      id: e.id,
+      employeeId: e.employeeId,
+      name: e.employee.name,
+      in: formatClock(e.clockIn),
+      out: e.clockOut ? formatClock(e.clockOut) : null,
+      hours: entryHours(e),
+    });
+    clockedByDay.set(k, list);
   }
 
   return (
@@ -90,6 +125,7 @@ export default async function StaffRotaPage({
       <div className="grid gap-3 md:grid-cols-2">
         {days.map((day) => {
           const dayShifts = byDay.get(toISODate(day)) ?? [];
+          const dayClocked = clockedByDay.get(toISODate(day)) ?? [];
           const isToday = toISODate(day) === toISODate(today);
           return (
             <Card
@@ -147,6 +183,34 @@ export default async function StaffRotaPage({
                 <p className="mt-2 text-right text-xs text-ink-faint">
                   {dayShifts.length} {tr.onShift}
                 </p>
+              )}
+
+              {/* Actual clocked times, so set vs worked can be compared */}
+              {dayClocked.length > 0 && (
+                <div className="mt-2 rounded-xl bg-forest-500/[0.07] p-2.5 ring-1 ring-inset ring-forest-500/20">
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-forest-300">
+                    {tr.clocked}
+                  </p>
+                  <ul className="space-y-0.5">
+                    {dayClocked.map((c) => {
+                      const mine = c.employeeId === me.id;
+                      return (
+                        <li
+                          key={c.id}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="flex items-center gap-1.5 text-ink">
+                            {c.name}
+                            {mine && <Badge color="#37c97e">{tr.you}</Badge>}
+                          </span>
+                          <span className="text-ink-muted">
+                            {c.in}–{c.out ?? t.clock.now} · {fmtHours(c.hours)}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               )}
             </Card>
           );
