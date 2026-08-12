@@ -80,6 +80,10 @@ function PaymentFields({
           />
         </div>
       </div>
+      <p className="-mt-1 text-xs text-ink-faint">
+        Leave &ldquo;Paid up to&rdquo; empty for a one-off amount — it just comes
+        off what&apos;s owed. Set a date to mark them settled up to that day.
+      </p>
       <div>
         <label className="label">Note (optional)</label>
         <input
@@ -163,17 +167,28 @@ export default async function PayrollPage({
       .reduce((h, s) => h + shiftHours(s.start, s.end), 0);
     const usedClocked = clockedH > 0;
     const earnedH = usedClocked ? clockedH : rotaH;
-    const owed = earnedH * e.hourlyRate;
+    const earnedPay = earnedH * e.hourlyRate;
+
+    // One-off payments (no "paid up to" date) made since the last settled date
+    // come straight off the balance.
+    const adHocPaid = history
+      .filter((p) => !p.periodEnd && p.date >= earnStart)
+      .reduce((s, p) => s + p.amount, 0);
+    const owed = earnedPay - adHocPaid;
 
     const source = usedClocked ? "clocked" : "rota'd";
-    const owedSub = paidUntil
+    const basis = paidUntil
       ? `${earnedH.toFixed(1)}h ${source} since ${formatShort(paidUntil)}`
       : `${earnedH.toFixed(1)}h ${source} · last 90 days`;
+    const owedSub =
+      adHocPaid > 0
+        ? `${money(earnedPay)} earned − ${money(adHocPaid)} paid`
+        : basis;
 
     return { e, history, paidUntil, owed, owedSub };
   });
 
-  const outstanding = cards.reduce((s, c) => s + c.owed, 0);
+  const outstanding = cards.reduce((s, c) => s + Math.max(0, c.owed), 0);
   const paidThisMonth = payments
     .filter((p) => p.date >= monthStart)
     .reduce((a, b) => a + b.amount, 0);
@@ -182,7 +197,7 @@ export default async function PayrollPage({
     <div className="space-y-6">
       <PageHeader
         title="Payroll"
-        subtitle="Log what you've paid each person and the date it covers up to"
+        subtitle="Log payments — the balance owed updates as you go"
       />
       <Flash ok={searchParams.ok} error={searchParams.error} />
 
@@ -226,6 +241,10 @@ export default async function PayrollPage({
                       <Icon name="check" className="h-3.5 w-3.5" />
                       Paid to {formatShort(c.paidUntil)}
                     </Badge>
+                  ) : c.history.length > 0 ? (
+                    <Badge color="#9fb8aa" tone="outline">
+                      No date set
+                    </Badge>
                   ) : (
                     <Badge color="#9fb8aa" tone="outline">
                       Not paid yet
@@ -239,11 +258,19 @@ export default async function PayrollPage({
                       Owed (est.)
                     </p>
                     <p className="text-lg font-bold leading-tight text-ink">
-                      {money(c.owed)}
+                      {money(Math.max(0, c.owed))}
                     </p>
                   </div>
                   <p className="shrink-0 text-right text-[11px] text-ink-faint">
                     {c.owedSub}
+                    {c.owed < -0.005 && (
+                      <>
+                        <br />
+                        <span className="font-medium text-forest-300">
+                          {money(-c.owed)} in credit
+                        </span>
+                      </>
+                    )}
                   </p>
                 </div>
 
@@ -257,9 +284,9 @@ export default async function PayrollPage({
                     action={logWagePayment}
                     employeeId={c.e.id}
                     defaults={{
-                      amount: c.owed > 0 ? c.owed.toFixed(2) : "",
+                      amount: c.owed > 0.005 ? c.owed.toFixed(2) : "",
                       date: todayISO,
-                      periodEnd: todayISO,
+                      periodEnd: "",
                       note: "",
                     }}
                     submitLabel="Log payment"
